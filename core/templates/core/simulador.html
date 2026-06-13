@@ -1,0 +1,66 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="row align-items-start mb-5">
+    <div class="col-md-5">
+        <h5 class="fw-bold mb-4" style="color: #800020;"><i class="bi bi-car-front"></i> Datos del Vehículo</h5>
+        <hr style="border-top: 2px solid #800020; opacity: 1;">
+        
+        <div class="mb-3 mt-4">
+            <label class="fw-bold text-muted">Valor del bien ($/)</label>
+            <input type="text" class="form-control bg-light text-center fw-bold fs-5" value="${{ vehiculo.precio_base }}" readonly>
+        </div>
+        <div class="mb-3">
+            <label class="fw-bold text-muted">Modelo</label>
+            <input type="text" class="form-control text-center fw-bold fs-5" value="{{ vehiculo.marca }} {{ vehiculo.modelo }}" readonly>
+        </div>
+    </div>
+    
+    <div class="col-md-7 text-center">
+        <div class="card border border-2 rounded-4 shadow-sm overflow-hidden mt-5">
+            <img src="{% if vehiculo.imagen_url %}{{ vehiculo.imagen_url }}{% else %}https://via.placeholder.com/600x300?text=Auto{% endif %}" class="img-fluid" style="object-fit: cover;">
+        </div>
+    </div>
+</div>
+
+<h5 class="fw-bold mb-4" style="color: #800020;">🖩 Condiciones del Préstamo</h5>
+<hr style="border-top: 2px solid #800020; opacity: 1;">
+
+<form method="POST">
+    {% csrf_token %}
+    <div class="row g-4 mt-2">
+        <div class="col-md-4">
+            <label class="fw-bold text-muted">Cuota Inicial ($/)</label>
+            <input type="number" class="form-control bg-light text-center fw-bold fs-5" name="cuota_inicial" value="5000">
+        </div>
+        <div class="col-md-4">
+            <label class="fw-bold text-muted">Cuota Balón (%)</label>
+            <input type="number" class="form-control bg-light text-center fw-bold fs-5" name="cuota_balon_pct" value="20">
+        </div>
+        <div class="col-md-4">
+            <label class="fw-bold text-muted">Tasa de Interés (TEA %)</label>
+            <input type="number" step="0.01" class="form-control bg-light text-center fw-bold fs-5" name="valor_tasa" value="8.80">
+        </div>
+    </div>
+
+    <input type="hidden" name="tasa_desgravamen" value="0.077">
+    <input type="hidden" name="tasa_vehicular" value="0.405">
+    <input type="hidden" name="tipo_gracia" value="PARCIAL">
+    <input type="hidden" name="meses_gracia" value="2">
+
+    <div class="row align-items-center mt-5">
+        <div class="col-md-6">
+            <label class="fw-bold text-muted mb-2">Plazo (meses):</label>
+            <select class="form-select border-0 shadow-sm fs-5 fw-bold" style="background-color: #d8c3c9; color: #5a1829;" name="plazo_meses">
+                <option value="12">12 meses</option>
+                <option value="18" selected>18 meses</option>
+                <option value="24">24 meses</option>
+                <option value="36">36 meses</option>
+            </select>
+        </div>
+        <div class="col-md-6 text-end">
+            <button type="submit" class="btn px-5 py-3 rounded-3 text-white fw-bold fs-5" style="background-color: #5a1829;">Continuar</button>
+        </div>
+    </div>
+</form>
+{% endblock %}

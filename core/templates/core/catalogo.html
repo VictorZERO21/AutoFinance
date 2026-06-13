@@ -1,0 +1,33 @@
+{% extends 'core/base.html' %}
+
+{% block content %}
+<div class="mb-4">
+    <h2 class="fw-bold">CATÁLOGO DE VEHÍCULOS</h2>
+    <p class="text-muted">Encuentra tu vehículo ideal. Selecciona el auto que más te guste y obtén el mejor financiamiento.</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for vehiculo in vehiculos %}
+    <div class="col">
+        <div class="card h-100 shadow-sm border-0">
+            <img src="{% if vehiculo.imagen_url %}{{ vehiculo.imagen_url }}{% else %}https://via.placeholder.com/300x150?text=Auto+Sin+Foto{% endif %}" class="card-img-top" alt="{{ vehiculo.marca }}">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ vehiculo.anio }} {{ vehiculo.marca }} {{ vehiculo.modelo }}</h5>
+                <p class="card-text text-muted small">{{ vehiculo.descripcion|default:"Sedán confiable y económico. Excelente para uso urbano." }}</p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="badge bg-light text-dark border">{{ vehiculo.anio }}</span>
+                    <span class="fw-bold text-success">${{ vehiculo.precio_base }}</span>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 pb-3">
+                <a href="{% url 'simular' vehiculo.id %}" class="btn btn-outline-dark w-100 fw-bold">Seleccionar</a>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning">No hay vehículos registrados en la base de datos aún. Entra al Panel de Administración para agregar algunos.</div>
+    </div>
+    {% endfor %}
+</div>
+{% endblock %}

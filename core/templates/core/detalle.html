@@ -1,0 +1,139 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+<a href="/catalogo/" class="text-decoration-none fw-bold mb-3 d-inline-block" style="color: #5a1829;">
+    &larr; Regresar
+</a>
+
+<div class="card text-white mb-4 border-0 shadow-sm" style="background-color: #4a1829; border-radius: 12px;">
+    <div class="card-body p-4">
+        <h2 class="fw-bold mb-4">Préstamo del Auto</h2>
+        <div class="row text-center mt-3">
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">Importe Financiado</small>
+                <strong class="fs-5">${{ indicadores.importe_financiado }}</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">Cuota Base</small>
+                <strong class="fs-5">${{ indicadores.cuota_base_ordinaria }}</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">Cuota Total</small>
+                <strong class="fs-5">${{ indicadores.cuota_ordinaria }}</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">Duración Total</small>
+                <strong class="fs-5">{{ indicadores.duracion_meses }} Meses</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">TCEA</small>
+                <strong class="fs-5">{{ indicadores.tcea_pct|floatformat:4 }}%</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">VAN</small>
+                <strong class="fs-5">${{ indicadores.van }}</strong>
+            </div>
+            <div class="col">
+                <small class="d-block text-white-50 fw-bold">TIR mensual</small>
+                <strong class="fs-5">{{ indicadores.tir_mensual_pct|floatformat:4 }}%</strong>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm mb-4" style="border-radius: 12px;">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-4" style="color: #5a1829;">
+            <img src="{% static 'imagenes/carro.png' %}" alt="Auto"
+                 style="width:22px;height:22px;vertical-align:middle;" class="me-2">
+            Detalles del Préstamo
+        </h5>
+        <div class="row">
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <span class="text-muted fw-bold">Auto Seleccionado</span>
+                    <span class="fw-bold">{{ prestamo.vehiculo.anio }} {{ prestamo.vehiculo.marca }}</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="text-muted fw-bold">Cuota Inicial</span>
+                    <span class="fw-bold">${{ prestamo.cuota_inicial_monto }}</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <span class="text-muted fw-bold">Seguro de Desgravamen</span>
+                    <span class="fw-bold">{{ prestamo.tasa_seguro_desgravamen }}%</span>
+                </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="text-muted fw-bold">Seguro de Bien</span>
+                    <span class="fw-bold">{{ prestamo.tasa_seguro_vehicular }}%</span>
+                </div>
+            </div>
+            <div class="col-md-4">
+                <div class="d-flex justify-content-between border-bottom pb-2 mb-3">
+                    <span class="text-muted fw-bold">TEA</span>
+                    <span class="fw-bold">{{ prestamo.valor_tasa }}%</span>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="card border-0 shadow-sm" style="border-radius: 12px;">
+    <div class="card-body p-4">
+        <h5 class="fw-bold mb-4" style="color: #5a1829;">
+            <img src="{% static 'imagenes/calendario.png' %}" alt="Calendario"
+                 style="width:22px;height:22px;vertical-align:middle;" class="me-2">
+            Cronograma de Pagos
+        </h5>
+
+        <div class="d-flex gap-4 mb-3 text-muted small fw-bold">
+            <div><span class="d-inline-block bg-warning rounded-circle me-1" style="width:10px; height:10px;"></span> Gracia Parcial</div>
+            <div><span class="d-inline-block bg-danger rounded-circle me-1" style="width:10px; height:10px;"></span> Gracia Total</div>
+            <div><span class="d-inline-block bg-light border rounded-circle me-1" style="width:10px; height:10px;"></span> Ordinario</div>
+            <div><span class="d-inline-block bg-info rounded-circle me-1" style="width:10px; height:10px;"></span> Cuota Balón</div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="table table-sm table-hover text-center" style="font-size: 0.85rem;">
+                <thead class="table-light text-muted">
+                    <tr>
+                        <th>N°</th>
+                        <th>Tipo de Período</th>
+                        <th>Fecha de Vencimiento</th>
+                        <th>Saldo Inicial</th>
+                        <th>Interés</th>
+                        <th>Amortización</th>
+                        <th>Cuota Base</th>
+                        <th>Desgravamen</th>
+                        <th>Seguro Bien</th>
+                        <th>Cuota Total</th>
+                        <th>Saldo Final</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for fila in cronograma %}
+                    <tr class="
+                        {% if fila.tipo_periodo == 'GRACIA_PARCIAL' %}table-warning
+                        {% elif fila.tipo_periodo == 'GRACIA_TOTAL' %}table-danger
+                        {% elif fila.tipo_periodo == 'CUOTA_BALON' %}table-info
+                        {% endif %}">
+                        <td>{{ fila.nro_cuota }}</td>
+                        <td>{{ fila.get_tipo_periodo_display }}</td>
+                        <td>{{ fila.fecha_vencimiento|date:"d/m/Y" }}</td>
+                        <td>${{ fila.saldo_inicial }}</td>
+                        <td>${{ fila.interes }}</td>
+                        <td>${{ fila.amortizacion }}</td>
+                        <td class="fw-semibold">${{ fila.cuota_base }}</td>
+                        <td>${{ fila.seguro_desgravamen }}</td>
+                        <td>${{ fila.seguro_vehicular }}</td>
+                        <td class="fw-bold">${{ fila.cuota_total }}</td>
+                        <td>${{ fila.saldo_final }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,13 @@
+# Entornos virtuales
+venv/
+env/
+
+# Archivos compilados de Python
+__pycache__/
+*.pyc
+
+# Base de datos local (si usaras SQLite, aunque usamos PostgreSQL, es buena práctica)
+db.sqlite3
+
+# Variables de entorno
+.env

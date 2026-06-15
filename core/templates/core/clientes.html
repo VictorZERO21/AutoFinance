@@ -1,0 +1,92 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+
+<div class="mb-4">
+    <p class="fw-bold mb-1 text-uppercase" style="color: #800020; letter-spacing: 1.5px; font-size: .85rem;">Gestión de Clientes</p>
+    <h1 class="fw-bold display-6 text-dark mb-1">Todos los clientes con préstamo</h1>
+    <p class="text-muted mb-0">Consulta y gestiona los préstamos activos de los clientes</p>
+</div>
+
+<!-- Filtros -->
+<div class="card border rounded-4 shadow-sm mb-4" style="background-color: #faf8f8; border-color: #d8c3c9 !important;">
+    <div class="card-body row align-items-end g-3">
+        <div class="col-md-5">
+            <input type="text" class="form-control" placeholder="Buscar por nombre, DNI o email">
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted fw-bold">Estado del préstamo</label>
+            <select class="form-select">
+                <option>Todos</option>
+                <option>Activo</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label class="form-label small text-muted fw-bold">Fecha</label>
+            <input type="text" class="form-control" placeholder="Rango de fechas">
+        </div>
+    </div>
+</div>
+
+<!-- Tabla de clientes -->
+<div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+    <div class="card-header bg-white border-bottom px-4 py-3">
+        <h6 class="fw-bold mb-0" style="color: #5a1829;">
+            <img src="{% static 'imagenes/carro.png' %}" alt=""
+                 style="width:18px;height:18px;vertical-align:middle;" class="me-2">
+            Registro de Préstamos
+        </h6>
+    </div>
+    <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0" style="border-collapse: separate; border-spacing: 0;">
+            <thead style="background-color: #f8f9fa;">
+                <tr>
+                    <th class="text-muted fw-semibold small border-0 px-4 py-3">Cliente</th>
+                    <th class="text-muted fw-semibold small border-0 py-3">Vehículo Financiado</th>
+                    <th class="text-muted fw-semibold small border-0 py-3">Monto del Préstamo</th>
+                    <th class="text-muted fw-semibold small border-0 py-3">Estado</th>
+                    <th class="text-muted fw-semibold small border-0 py-3">Fecha de Inicio</th>
+                    <th class="text-muted fw-semibold small border-0 py-3">Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for prestamo in prestamos %}
+                <tr style="border-top: 1px solid #f0e8ea;">
+                    <td class="px-4 py-3">
+                        <strong class="d-block text-dark">{{ prestamo.usuario.nombre_completo }}</strong>
+                        <span class="text-muted small">DNI: {{ prestamo.usuario.dni }}</span><br>
+                        <span class="text-muted small">{{ prestamo.usuario.email }}</span>
+                    </td>
+                    <td class="fw-bold py-3">
+                        {{ prestamo.vehiculo.anio }} {{ prestamo.vehiculo.marca }} {{ prestamo.vehiculo.modelo }}
+                    </td>
+                    <td class="py-3 fw-bold" style="color: #5a1829;">${{ prestamo.precio_bien }}</td>
+                    <td class="py-3">
+                        <span class="badge bg-success text-white px-3 py-1 rounded-pill" style="font-size:.78rem;">
+                            Activo
+                        </span>
+                    </td>
+                    <td class="py-3 text-muted">{{ prestamo.fecha_inicio|date:"d/m/Y" }}</td>
+                    <td class="py-3">
+                        <a href="{% url 'detalle_prestamo' prestamo.id %}"
+                           class="btn btn-sm fw-bold px-3 rounded-pill text-white"
+                           style="background-color: #4a1829;">
+                            Ver préstamo
+                        </a>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="text-center py-5 text-muted">
+                        <img src="{% static 'imagenes/carro.png' %}" alt=""
+                             style="width:48px;height:48px;opacity:.35;" class="mb-3 d-block mx-auto">
+                        Aún no hay préstamos registrados en el sistema.
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+
+{% endblock %}

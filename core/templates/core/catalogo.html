@@ -1,0 +1,116 @@
+{% extends 'core/base.html' %}
+{% load static %}
+{% block content %}
+
+<!-- Barra superior fija de vehículo seleccionado -->
+<div id="barra-seleccion"
+     class="d-none mb-4 py-3 px-4 rounded-3 d-flex justify-content-between align-items-center"
+     style="background-color: #800020; position: sticky; top: 0; z-index: 900;">
+    <span class="text-white fw-bold fs-5">
+        ✓ Vehículo seleccionado: <span id="nombre-vehiculo-seleccionado"></span>
+    </span>
+    <a id="btn-crear-prestamo" href="#" class="btn btn-light fw-bold px-4">
+        Crear préstamo para este vehículo
+    </a>
+</div>
+
+<div class="mb-4">
+    <p class="fw-bold mb-1 text-uppercase" style="color: #800020; letter-spacing: 1.5px; font-size: .85rem;">Catálogo de Vehículos</p>
+    <h1 class="fw-bold display-6 text-dark mb-2">Encuentra tu vehículo ideal</h1>
+    <p class="fw-bold fs-5 mb-0">Selecciona el auto que más te guste y obtén el mejor financiamiento.</p>
+</div>
+
+<div class="row row-cols-1 row-cols-md-3 g-4">
+    {% for vehiculo in vehiculos %}
+    <div class="col">
+        <div class="card h-100 shadow-sm vehiculo-card"
+             id="card-{{ vehiculo.id }}"
+             data-vehiculo-id="{{ vehiculo.id }}"
+             data-vehiculo-nombre="{{ vehiculo.anio }} {{ vehiculo.marca }} {{ vehiculo.modelo }}"
+             data-simular-url="{% url 'simular' vehiculo.id %}">
+            <img src="{% if vehiculo.imagen_url %}{% static vehiculo.imagen_url %}{% else %}{% static 'imagenes/carro.png' %}{% endif %}"
+                 class="card-img-top" style="object-fit: cover; height: 180px;"
+                 alt="{{ vehiculo.marca }} {{ vehiculo.modelo }}">
+            <div class="card-body">
+                <h5 class="card-title fw-bold">{{ vehiculo.anio }} {{ vehiculo.marca }} {{ vehiculo.modelo }}</h5>
+                <p class="card-text text-muted small">
+                    {{ vehiculo.descripcion|default:"Sedán confiable y económico. Excelente para uso urbano." }}
+                </p>
+                <div class="d-flex justify-content-between align-items-center mt-3">
+                    <span class="badge bg-light text-dark border">{{ vehiculo.anio }}</span>
+                    <span class="fw-bold text-success">${{ vehiculo.precio_base }}</span>
+                </div>
+            </div>
+            <div class="card-footer bg-white border-0 pb-3">
+                <button type="button" class="btn btn-outline-dark w-100 fw-bold btn-seleccionar">
+                    Seleccionar
+                </button>
+            </div>
+        </div>
+    </div>
+    {% empty %}
+    <div class="col-12">
+        <div class="alert alert-warning">
+            No hay vehículos registrados en la base de datos aún.
+            Entra al Panel de Administración para agregar algunos.
+        </div>
+    </div>
+    {% endfor %}
+</div>
+
+<style>
+    .vehiculo-card {
+        border: 2px solid transparent;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .vehiculo-card.seleccionado {
+        border-color: #800020;
+        box-shadow: 0 0 0 3px rgba(128, 0, 32, 0.18) !important;
+    }
+    .vehiculo-card.seleccionado .btn-seleccionar {
+        background-color: #800020;
+        color: #fff;
+        border-color: #800020;
+    }
+</style>
+
+<script>
+    (function () {
+        const barra = document.getElementById('barra-seleccion');
+        const nombreSpan = document.getElementById('nombre-vehiculo-seleccionado');
+        const btnCrear = document.getElementById('btn-crear-prestamo');
+
+        document.querySelectorAll('.btn-seleccionar').forEach(function (btn) {
+            btn.addEventListener('click', function () {
+                const card = btn.closest('.vehiculo-card');
+                const yaSeleccionado = card.classList.contains('seleccionado');
+
+                // Quitar selección previa de todas las tarjetas
+                document.querySelectorAll('.vehiculo-card').forEach(function (c) {
+                    c.classList.remove('seleccionado');
+                    c.querySelector('.btn-seleccionar').textContent = 'Seleccionar';
+                });
+
+                if (yaSeleccionado) {
+                    // Clic sobre la tarjeta ya seleccionada → deseleccionar
+                    barra.classList.add('d-none');
+                    return;
+                }
+
+                // Marcar la nueva tarjeta
+                card.classList.add('seleccionado');
+                btn.textContent = '✓ Seleccionado';
+
+                // Actualizar barra superior
+                nombreSpan.textContent = card.dataset.vehiculoNombre;
+                btnCrear.setAttribute('href', card.dataset.simularUrl);
+                barra.classList.remove('d-none');
+
+                // Scroll suave hacia arriba para mostrar la barra
+                window.scrollTo({ top: 0, behavior: 'smooth' });
+            });
+        });
+    })();
+</script>
+
+{% endblock %}

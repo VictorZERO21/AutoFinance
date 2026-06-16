@@ -12,6 +12,8 @@ https://docs.djangoproject.com/en/6.0/ref/settings/
 
 from pathlib import Path
 from decouple import config, Csv
+import dj_database_url
+import os
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -24,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-&nuk#@y3zye@y7hd$k5irtq(d)no94+9j+di00@h+g++03_^=_')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = config('DEBUG', default=False, cast=bool)
+DEBUG = config('DEBUG', default=True, cast=bool)
 
 ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1', cast=Csv())
 
@@ -78,7 +80,17 @@ WSGI_APPLICATION = 'autofinance_web.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/6.0/ref/settings/#databases
 
-if config('USE_CLOUD_SQL', default=False, cast=bool):
+# Primero intenta usar DATABASE_URL (para Render.com)
+if os.environ.get('DATABASE_URL'):
+    DATABASES = {
+        'default': dj_database_url.config(
+            default=os.environ.get('DATABASE_URL'),
+            conn_max_age=600,
+            conn_health_checks=True,
+        )
+    }
+# Luego intenta Cloud SQL
+elif config('USE_CLOUD_SQL', default=False, cast=bool):
     DATABASES = {
         'default': {
             'ENGINE': 'django.db.backends.postgresql',
@@ -89,6 +101,7 @@ if config('USE_CLOUD_SQL', default=False, cast=bool):
             'PORT': config('CLOUD_SQL_PORT', default='5432'),
         }
     }
+# Por defecto usa SQLite
 else:
     DATABASES = {
         'default': {

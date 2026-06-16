@@ -1,10 +1,10 @@
 Django==6.0.6
 djangorestframework==3.14.0
 djangorestframework-simplejwt==5.5.1
-psycopg2-binary==2.9.9
-numpy-financial==1.6
-numpy==1.24.3
-pandas==2.0.3
+psycopg2-binary==2.9.10
+numpy-financial==1.0.0
+numpy==1.26.4
+pandas==2.2.3
 cloudinary==1.36.0
 gunicorn==21.2.0
 whitenoise==6.6.0

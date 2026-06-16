@@ -55,7 +55,7 @@ class RegisterSerializer(serializers.ModelSerializer):
             email=email,
             password=password,
             nombre_completo='',
-            dni='',
+            dni=None,
             rol='CLIENTE'
         )
         return usuario

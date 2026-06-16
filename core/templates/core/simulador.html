@@ -1,66 +1,594 @@
 {% extends 'core/base.html' %}
-
+{% load static %}
 {% block content %}
-<div class="row align-items-start mb-5">
-    <div class="col-md-5">
-        <h5 class="fw-bold mb-4" style="color: #800020;"><i class="bi bi-car-front"></i> Datos del Vehículo</h5>
-        <hr style="border-top: 2px solid #800020; opacity: 1;">
-        
-        <div class="mb-3 mt-4">
-            <label class="fw-bold text-muted">Valor del bien ($/)</label>
-            <input type="text" class="form-control bg-light text-center fw-bold fs-5" value="${{ vehiculo.precio_base }}" readonly>
+
+{% if form.non_field_errors %}
+<div class="alert alert-danger mt-2">{{ form.non_field_errors }}</div>
+{% endif %}
+
+<style>
+/* ── Slider de plazo ─────────────────────────────────────────────────── */
+#slider-plazo {
+    -webkit-appearance: none; appearance: none;
+    width: 100%; height: 6px; border-radius: 3px;
+    outline: none; cursor: pointer;
+    background: linear-gradient(
+        to right,
+        #800020 0%, #800020 var(--pct, 5%),
+        #e0c0cb var(--pct, 5%), #e0c0cb 100%
+    );
+}
+#slider-plazo::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #800020; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+#slider-plazo::-moz-range-thumb {
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #800020; border: none; box-shadow: 0 1px 4px rgba(0,0,0,.35);
+}
+
+/* ── Separador vertical ──────────────────────────────────────────────── */
+.divider-v {
+    width: 2px; background: #800020; border-radius: 1px;
+    align-self: stretch; min-height: 90px;
+}
+
+/* ── Caja rosada gracia ──────────────────────────────────────────────── */
+.gracia-box {
+    background: #fdf0f4; border-radius: 14px;
+    padding: 1.6rem 2rem; min-width: 300px; max-width: 340px;
+}
+
+/* ── Radio/check con acento vino ─────────────────────────────────────── */
+.form-check-input:checked { background-color: #800020; border-color: #800020; }
+.form-check-input:focus   { box-shadow: 0 0 0 .2rem rgba(128,0,32,.2); border-color: #800020; }
+
+/* ── Encabezados de sección ──────────────────────────────────────────── */
+.sec-title { color: #800020; font-weight: 700; margin-bottom: .4rem; font-size: 1.25rem; }
+.sec-hr    { border-top: 2px solid #800020; opacity: 1; margin-bottom: 2rem; }
+
+/* ── Botón Continuar ─────────────────────────────────────────────────── */
+.btn-continuar {
+    background: #5a1829; color: #fff; font-weight: 700;
+    font-size: 1.1rem; padding: .75rem 2.8rem;
+    border-radius: .5rem; border: none; cursor: pointer;
+    transition: background .2s;
+}
+.btn-continuar:hover { background: #800020; }
+
+/* ── Campos deshabilitados ───────────────────────────────────────────── */
+input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
+
+/* ── Texto de ayuda de rango ─────────────────────────────────────────── */
+.hint-rango { color: #6c757d; font-size: .78rem; margin-top: .3rem; display: block; }
+.hint-rango img { margin-right: .25rem; }
+
+/* ── Error dinámico de rango (JS) ────────────────────────────────────── */
+.range-error { font-size: .80rem; margin-top: .25rem; display: none; color: #dc3545; }
+</style>
+
+<form method="POST" novalidate id="simulador-form" class="pb-5">
+{% csrf_token %}
+
+<!-- ══════════════════════════════════════════════════════════════
+     PASO 1 — Datos del Vehículo + Condiciones del Préstamo
+══════════════════════════════════════════════════════════════ -->
+<div id="paso-1">
+
+    <!-- ── Datos del Vehículo ────────────────────────────────────── -->
+    <h4 class="sec-title mt-3">
+        <img src="{% static 'imagenes/carro.png' %}" class="me-2" alt="Carro"
+             style="width:24px;height:24px;vertical-align:middle;">
+        Datos del Vehículo
+    </h4>
+    <hr class="sec-hr">
+
+    <div class="row align-items-center mb-5 g-4">
+        <div class="col-md-4">
+            <div class="mb-4">
+                <label class="fw-bold text-muted mb-1">Valor del bien ($/)</label>
+                <input type="number" step="0.01" min="1"
+                       id="id_precio_bien" name="precio_bien"
+                       class="form-control bg-light text-center fw-bold fs-5{% if form.precio_bien.errors %} is-invalid{% endif %}"
+                       value="{{ form.precio_bien.value|default:vehiculo.precio_base }}">
+                {% if form.precio_bien.errors %}
+                <div class="invalid-feedback">{{ form.precio_bien.errors.0 }}</div>
+                {% endif %}
+            </div>
+            <div>
+                <label class="fw-bold text-muted mb-1">Modelo</label>
+                <input type="text" class="form-control text-center fw-bold fs-5"
+                       value="{{ vehiculo.marca }} {{ vehiculo.modelo }}" readonly>
+            </div>
         </div>
-        <div class="mb-3">
-            <label class="fw-bold text-muted">Modelo</label>
-            <input type="text" class="form-control text-center fw-bold fs-5" value="{{ vehiculo.marca }} {{ vehiculo.modelo }}" readonly>
+        <div class="col-md-8">
+            <div class="card border-2 rounded-4 shadow-sm bg-white p-3"
+                 style="border-color: #800020 !important;">
+                <img src="{% if vehiculo.imagen_url %}{% static vehiculo.imagen_url %}{% else %}{% static 'imagenes/carro.png' %}{% endif %}"
+                     class="w-100"
+                     style="object-fit: contain; max-height: 250px; display: block;"
+                     alt="{{ vehiculo }}">
+            </div>
         </div>
     </div>
-    
-    <div class="col-md-7 text-center">
-        <div class="card border border-2 rounded-4 shadow-sm overflow-hidden mt-5">
-            <img src="{% if vehiculo.imagen_url %}{{ vehiculo.imagen_url }}{% else %}https://via.placeholder.com/600x300?text=Auto{% endif %}" class="img-fluid" style="object-fit: cover;">
+
+    <!-- ── Condiciones del Préstamo ──────────────────────────────── -->
+    <h4 class="sec-title">
+        <img src="{% static 'imagenes/calculadora.png' %}" class="me-2" alt="Calculadora"
+             style="width:24px;height:24px;vertical-align:middle;">
+        Condiciones del Préstamo
+    </h4>
+    <hr class="sec-hr">
+
+    <div class="row g-4 mb-4">
+
+        <!-- Cuota Inicial % -->
+        <div class="col-md-3">
+            <label class="fw-bold text-muted mb-1">Cuota Inicial (%)</label>
+            <input type="number" step="0.01" min="0" max="40"
+                   id="id_cuota_inicial_pct" name="cuota_inicial_pct"
+                   class="form-control bg-light text-center fw-bold fs-5{% if form.cuota_inicial_pct.errors %} is-invalid{% endif %}"
+                   value="{{ form.cuota_inicial_pct.value|default:'20' }}">
+            {% if form.cuota_inicial_pct.errors %}
+            <div class="invalid-feedback">{{ form.cuota_inicial_pct.errors.0 }}</div>
+            {% endif %}
+            <div class="range-error" id="err-cuota-inicial-pct"></div>
+            <small class="hint-rango">
+                <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                Permitido: 0 % a 40 %
+            </small>
+        </div>
+
+        <!-- Cuota Balón % -->
+        <div class="col-md-3">
+            <label class="fw-bold text-muted mb-1">Cuota Balón (%)</label>
+            <input type="number" step="0.01" min="0" max="40"
+                   id="id_cuota_balon_pct" name="cuota_balon_pct"
+                   class="form-control bg-light text-center fw-bold fs-5{% if form.cuota_balon_pct.errors %} is-invalid{% endif %}"
+                   value="{{ form.cuota_balon_pct.value|default:'20' }}">
+            {% if form.cuota_balon_pct.errors %}
+            <div class="invalid-feedback">{{ form.cuota_balon_pct.errors.0 }}</div>
+            {% endif %}
+            <div class="range-error" id="err-cuota-balon-pct"></div>
+            <small class="hint-rango">
+                <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                Permitido: 0 % a 40 %
+            </small>
+        </div>
+
+        <!-- TEA -->
+        <div class="col-md-3">
+            <label class="fw-bold text-muted mb-1">Tasa de Interés (TEA %)</label>
+            <input type="number" step="0.01" min="8" max="25"
+                   id="id_valor_tasa" name="valor_tasa"
+                   class="form-control bg-light text-center fw-bold fs-5{% if form.valor_tasa.errors %} is-invalid{% endif %}"
+                   value="{{ form.valor_tasa.value|default:'8.80' }}">
+            {% if form.valor_tasa.errors %}
+            <div class="invalid-feedback">{{ form.valor_tasa.errors.0 }}</div>
+            {% endif %}
+            <div class="range-error" id="err-valor-tasa"></div>
+            <small class="hint-rango">
+                <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                Permitido: 8 % a 25 %
+            </small>
+        </div>
+
+        <!-- COK -->
+        <div class="col-md-3">
+            <label class="fw-bold text-muted mb-1">COK (% anual)</label>
+            <input type="number" step="0.01" min="1" max="100"
+                   id="id_cok" name="cok"
+                   class="form-control bg-light text-center fw-bold fs-5{% if form.cok.errors %} is-invalid{% endif %}"
+                   value="{{ form.cok.value|default:'15.00' }}">
+            {% if form.cok.errors %}
+            <div class="invalid-feedback">{{ form.cok.errors.0 }}</div>
+            {% endif %}
+            <div class="range-error" id="err-cok"></div>
+            <small class="hint-rango">
+                <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                Permitido: 1 % a 100 %
+            </small>
+        </div>
+
+    </div>
+
+    <!-- Slider de plazo + Continuar -->
+    <div class="row align-items-end g-3 mt-2 mb-3">
+        <div class="col-md-8">
+            <label class="fw-bold text-muted mb-2">
+                Plazo (meses): <strong id="label-plazo">{{ form.plazo_meses.value|default:'18' }}</strong> meses
+            </label>
+            <input type="hidden" name="plazo_meses" id="inp-plazo"
+                   value="{{ form.plazo_meses.value|default:'18' }}">
+            <input type="range" id="slider-plazo" min="12" max="120" step="1"
+                   value="{{ form.plazo_meses.value|default:'18' }}" class="w-100">
+            <div class="d-flex justify-content-between mt-1">
+                <small class="text-muted">12 meses</small>
+                <small class="text-muted">120 meses</small>
+            </div>
+            {% if form.plazo_meses.errors %}
+            <div class="text-danger small mt-1">{{ form.plazo_meses.errors.0 }}</div>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-end pb-1">
+            <button type="button" class="btn-continuar" onclick="irPaso2()">
+                Continuar &rarr;
+            </button>
         </div>
     </div>
-</div>
 
-<h5 class="fw-bold mb-4" style="color: #800020;">🖩 Condiciones del Préstamo</h5>
-<hr style="border-top: 2px solid #800020; opacity: 1;">
+</div><!-- /paso-1 -->
 
-<form method="POST">
-    {% csrf_token %}
-    <div class="row g-4 mt-2">
-        <div class="col-md-4">
-            <label class="fw-bold text-muted">Cuota Inicial ($/)</label>
-            <input type="number" class="form-control bg-light text-center fw-bold fs-5" name="cuota_inicial" value="5000">
+
+<!-- ══════════════════════════════════════════════════════════════
+     PASO 2 — Gracia · Seguros · Fecha de Inicio
+══════════════════════════════════════════════════════════════ -->
+<div id="paso-2" class="d-none">
+
+    <!-- ── Período de Gracia ─────────────────────────────────────── -->
+    <h4 class="sec-title mt-3">
+        <img src="{% static 'imagenes/calendario.png' %}" class="me-2" alt="Calendario"
+             style="width:24px;height:24px;vertical-align:middle;">
+        Periodo de Gracia
+    </h4>
+    <hr class="sec-hr">
+
+    <div class="d-flex align-items-stretch gap-3 mb-5 flex-wrap">
+
+        <!-- Caja rosada -->
+        <div class="gracia-box">
+            <p class="fw-bold text-muted mb-3">¿Desea el período de Gracia?</p>
+            <div class="d-flex gap-4">
+                <div class="form-check">
+                    <input class="form-check-input" type="radio"
+                           name="desea_gracia" id="gracia-si" value="SI"
+                           {% if form.desea_gracia.value != 'NO' %}checked{% endif %}>
+                    <label class="form-check-label fw-bold fs-5" for="gracia-si">Si</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio"
+                           name="desea_gracia" id="gracia-no" value="NO"
+                           {% if form.desea_gracia.value == 'NO' %}checked{% endif %}>
+                    <label class="form-check-label fw-bold fs-5" for="gracia-no">No</label>
+                </div>
+            </div>
         </div>
-        <div class="col-md-4">
-            <label class="fw-bold text-muted">Cuota Balón (%)</label>
-            <input type="number" class="form-control bg-light text-center fw-bold fs-5" name="cuota_balon_pct" value="20">
-        </div>
-        <div class="col-md-4">
-            <label class="fw-bold text-muted">Tasa de Interés (TEA %)</label>
-            <input type="number" step="0.01" class="form-control bg-light text-center fw-bold fs-5" name="valor_tasa" value="8.80">
+
+        <div class="divider-v d-none d-md-block"></div>
+
+        <!-- Tipo + Meses: siempre visibles, disabled/enabled por JS -->
+        <div class="flex-grow-1 row g-3 align-items-center">
+
+            <div class="col-md-5">
+                <p class="fw-bold text-muted mb-2">Tipo de Gracia</p>
+                <div class="form-check mb-2">
+                    <input class="form-check-input" type="radio"
+                           name="tipo_gracia" id="tipo-total" value="TOTAL"
+                           {% if form.tipo_gracia.value == 'TOTAL' %}checked{% endif %}>
+                    <label class="form-check-label" for="tipo-total">Gracia Total</label>
+                </div>
+                <div class="form-check">
+                    <input class="form-check-input" type="radio"
+                           name="tipo_gracia" id="tipo-parcial" value="PARCIAL"
+                           {% if form.tipo_gracia.value != 'TOTAL' %}checked{% endif %}>
+                    <label class="form-check-label" for="tipo-parcial">Gracia Parcial</label>
+                </div>
+                {% if form.tipo_gracia.errors %}
+                <div class="text-danger small mt-1">{{ form.tipo_gracia.errors.0 }}</div>
+                {% endif %}
+            </div>
+
+            <div class="col-md-7">
+                <label class="fw-bold text-muted mb-1">Número de meses de Gracia</label>
+                <input type="number" min="0" max="4"
+                       id="id_meses_gracia" name="meses_gracia"
+                       class="form-control bg-light text-center fw-bold fs-5{% if form.meses_gracia.errors %} is-invalid{% endif %}"
+                       value="{{ form.meses_gracia.value|default:'2' }}">
+                {% if form.meses_gracia.errors %}
+                <div class="invalid-feedback">{{ form.meses_gracia.errors.0 }}</div>
+                {% endif %}
+                <div class="range-error" id="err-meses-gracia"></div>
+                <small class="hint-rango">
+                    <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                    Permitido: 0 a 4 meses
+                </small>
+            </div>
+
         </div>
     </div>
 
-    <input type="hidden" name="tasa_desgravamen" value="0.077">
-    <input type="hidden" name="tasa_vehicular" value="0.405">
-    <input type="hidden" name="tipo_gracia" value="PARCIAL">
-    <input type="hidden" name="meses_gracia" value="2">
+    <!-- ── Seguros ───────────────────────────────────────────────── -->
+    <h4 class="sec-title">
+        <img src="{% static 'imagenes/escudo.png' %}" class="me-2" alt="Escudo"
+             style="width:24px;height:24px;vertical-align:middle;">
+        Seguros
+    </h4>
+    <hr class="sec-hr">
 
-    <div class="row align-items-center mt-5">
+    <div class="row g-4 mb-5">
+
+        <!-- Seguro de Desgravamen -->
         <div class="col-md-6">
-            <label class="fw-bold text-muted mb-2">Plazo (meses):</label>
-            <select class="form-select border-0 shadow-sm fs-5 fw-bold" style="background-color: #d8c3c9; color: #5a1829;" name="plazo_meses">
-                <option value="12">12 meses</option>
-                <option value="18" selected>18 meses</option>
-                <option value="24">24 meses</option>
-                <option value="36">36 meses</option>
+            <label class="fw-bold text-muted mb-1">Seguro de Desgravamen ($/)</label>
+            <select class="form-select fw-bold" name="tasa_desgravamen" id="sel-desgravamen">
+                {% for val, label in form.tasa_desgravamen.field.choices %}
+                <option value="{{ val }}"
+                    {% if form.tasa_desgravamen.value == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
             </select>
+            <div id="otro-desgravamen" class="mt-2{% if form.tasa_desgravamen.value != 'OTRO' %} d-none{% endif %}">
+                <label class="fw-bold text-muted mb-1">Porcentaje mensual (%)</label>
+                <input type="number" step="0.001" min="0.04" max="0.07"
+                       name="tasa_desgravamen_custom" id="inp-desgravamen-custom"
+                       class="form-control bg-light text-center fw-bold{% if form.tasa_desgravamen_custom.errors %} is-invalid{% endif %}"
+                       placeholder="ej. 0.055"
+                       value="{{ form.tasa_desgravamen_custom.value|default:'' }}">
+                {% if form.tasa_desgravamen_custom.errors %}
+                <div class="invalid-feedback d-block">{{ form.tasa_desgravamen_custom.errors.0 }}</div>
+                {% endif %}
+                <div class="range-error" id="err-desgravamen-custom"></div>
+                <small class="hint-rango">
+                    <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                    Permitido: 0.04 % a 0.07 %
+                </small>
+            </div>
         </div>
-        <div class="col-md-6 text-end">
-            <button type="submit" class="btn px-5 py-3 rounded-3 text-white fw-bold fs-5" style="background-color: #5a1829;">Continuar</button>
+
+        <!-- Seguro del Bien -->
+        <div class="col-md-6">
+            <label class="fw-bold text-muted mb-1">Seguro del Bien</label>
+            <select class="form-select fw-bold" name="tasa_vehicular" id="sel-vehicular">
+                {% for val, label in form.tasa_vehicular.field.choices %}
+                <option value="{{ val }}"
+                    {% if form.tasa_vehicular.value == val %}selected{% endif %}>
+                    {{ label }}
+                </option>
+                {% endfor %}
+            </select>
+            <div id="otro-vehicular" class="mt-2{% if form.tasa_vehicular.value != 'OTRO' %} d-none{% endif %}">
+                <label class="fw-bold text-muted mb-1">Porcentaje mensual (%)</label>
+                <input type="number" step="0.01" min="0.35" max="8.5"
+                       name="tasa_vehicular_custom" id="inp-vehicular-custom"
+                       class="form-control bg-light text-center fw-bold{% if form.tasa_vehicular_custom.errors %} is-invalid{% endif %}"
+                       placeholder="ej. 0.40"
+                       value="{{ form.tasa_vehicular_custom.value|default:'' }}">
+                {% if form.tasa_vehicular_custom.errors %}
+                <div class="invalid-feedback d-block">{{ form.tasa_vehicular_custom.errors.0 }}</div>
+                {% endif %}
+                <div class="range-error" id="err-vehicular-custom"></div>
+                <small class="hint-rango">
+                    <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                    Permitido: 0.35 % a 8.5 %
+                </small>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- ── Fecha de Inicio ───────────────────────────────────────── -->
+    <h4 class="sec-title">
+        <img src="{% static 'imagenes/calendario.png' %}" class="me-2" alt="Calendario"
+             style="width:24px;height:24px;vertical-align:middle;">
+        Fecha de Inicio
+    </h4>
+    <hr class="sec-hr">
+
+    <div class="row align-items-end g-3 mb-4">
+        <div class="col-md-4">
+            <label class="fw-bold text-muted mb-1">Fecha de inicio</label>
+            <input type="date" id="id_fecha_inicio" name="fecha_inicio"
+                   class="form-control bg-light fw-bold fs-5{% if form.fecha_inicio.errors %} is-invalid{% endif %}"
+                   value="{{ fecha_inicio_val }}">
+            {% if form.fecha_inicio.errors %}
+            <div class="invalid-feedback">{{ form.fecha_inicio.errors.0 }}</div>
+            {% endif %}
+            <div class="range-error" id="err-fecha-inicio"></div>
+            <small class="hint-rango">
+                <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                Mínimo: hoy — Máximo: 1 año desde hoy
+            </small>
+        </div>
+        <div class="col-md-8 text-end pb-1">
+            <button type="submit" class="btn-continuar">
+                Continuar &rarr;
+            </button>
         </div>
     </div>
+
+</div><!-- /paso-2 -->
+
 </form>
+
+<!-- ══════════════════════════════════════════════════════════════
+     JAVASCRIPT
+══════════════════════════════════════════════════════════════ -->
+<script>
+(function () {
+
+    /* ── Utilidad: formatear Date a YYYY-MM-DD sin conversión UTC ── */
+    function toYMD(d) {
+        const y  = d.getFullYear();
+        const m  = String(d.getMonth() + 1).padStart(2, '0');
+        const dd = String(d.getDate()).padStart(2, '0');
+        return `${y}-${m}-${dd}`;
+    }
+
+
+    /* ── Validación de rango dinámica ──────────────────────────── */
+    function setupRangeValidation(inputEl, min, max, unit, errEl) {
+        if (!inputEl || !errEl) return;
+
+        function validate() {
+            const val = parseFloat(inputEl.value);
+            if (inputEl.value === '' || isNaN(val)) { clearErr(); return; }
+            if (val < min) {
+                showErr(`El valor es menor al mínimo permitido (${min}${unit}).`);
+            } else if (val > max) {
+                showErr(`El valor supera el máximo permitido (${max}${unit}).`);
+            } else {
+                clearErr();
+            }
+        }
+
+        function showErr(msg) {
+            inputEl.classList.add('is-invalid');
+            errEl.textContent = msg;
+            errEl.style.display = 'block';
+        }
+        function clearErr() {
+            inputEl.classList.remove('is-invalid');
+            errEl.style.display = 'none';
+        }
+
+        inputEl.addEventListener('input', validate);
+        inputEl.addEventListener('blur',  validate);
+    }
+
+    // Paso 1
+    setupRangeValidation(
+        document.getElementById('id_cuota_inicial_pct'), 0, 40, '%',
+        document.getElementById('err-cuota-inicial-pct'));
+    setupRangeValidation(
+        document.getElementById('id_cuota_balon_pct'), 0, 40, '%',
+        document.getElementById('err-cuota-balon-pct'));
+    setupRangeValidation(
+        document.getElementById('id_valor_tasa'), 8, 25, '%',
+        document.getElementById('err-valor-tasa'));
+    setupRangeValidation(
+        document.getElementById('id_cok'), 1, 100, '%',
+        document.getElementById('err-cok'));
+
+    // Paso 2
+    setupRangeValidation(
+        document.getElementById('id_meses_gracia'), 0, 4, ' meses',
+        document.getElementById('err-meses-gracia'));
+    setupRangeValidation(
+        document.getElementById('inp-desgravamen-custom'), 0.04, 0.07, '%',
+        document.getElementById('err-desgravamen-custom'));
+    setupRangeValidation(
+        document.getElementById('inp-vehicular-custom'), 0.35, 8.5, '%',
+        document.getElementById('err-vehicular-custom'));
+
+
+    /* ── Navegación entre pasos ───────────────────────────────── */
+    const paso1 = document.getElementById('paso-1');
+    const paso2 = document.getElementById('paso-2');
+
+    function irPaso2() {
+        const precio = document.getElementById('id_precio_bien');
+        const ci     = document.getElementById('id_cuota_inicial_pct');
+        const cb     = document.getElementById('id_cuota_balon_pct');
+        const tasa   = document.getElementById('id_valor_tasa');
+        const cok    = document.getElementById('id_cok');
+
+        const vacios = [precio, ci, cb, tasa, cok].filter(el => !el.value);
+        if (vacios.length) { vacios[0].focus(); return; }
+
+        const fueraDeRango = [ci, cb, tasa, cok].some(el => el.classList.contains('is-invalid'));
+        if (fueraDeRango) {
+            [ci, cb, tasa, cok].find(el => el.classList.contains('is-invalid'))?.focus();
+            return;
+        }
+
+        paso1.classList.add('d-none');
+        paso2.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.irPaso2 = irPaso2;
+
+    {% if form.desea_gracia.errors or form.tipo_gracia.errors or form.meses_gracia.errors or form.tasa_desgravamen.errors or form.tasa_desgravamen_custom.errors or form.tasa_vehicular.errors or form.tasa_vehicular_custom.errors or form.fecha_inicio.errors %}
+    paso1.classList.add('d-none');
+    paso2.classList.remove('d-none');
+    {% endif %}
+
+
+    /* ── Slider de plazo ─────────────────────────────────────── */
+    const slider     = document.getElementById('slider-plazo');
+    const inpPlazo   = document.getElementById('inp-plazo');
+    const labelPlazo = document.getElementById('label-plazo');
+
+    function actualizarSlider() {
+        const pct = ((parseInt(slider.value) - 12) / (120 - 12) * 100).toFixed(2) + '%';
+        slider.style.setProperty('--pct', pct);
+        labelPlazo.textContent = slider.value;
+        inpPlazo.value = slider.value;
+    }
+    slider.addEventListener('input', actualizarSlider);
+    actualizarSlider();
+
+
+    /* ── Toggle Gracia ───────────────────────────────────────── */
+    const radioSi    = document.getElementById('gracia-si');
+    const radioNo    = document.getElementById('gracia-no');
+    const inpMeses   = document.getElementById('id_meses_gracia');
+    const tipoRadios = document.querySelectorAll('[name="tipo_gracia"]');
+
+    function toggleGracia() {
+        const activo = radioSi.checked;
+        tipoRadios.forEach(r => r.disabled = !activo);
+        if (inpMeses) inpMeses.disabled = !activo;
+        if (!activo && inpMeses) inpMeses.value = '0';
+    }
+
+    radioSi.addEventListener('change', toggleGracia);
+    radioNo.addEventListener('change', toggleGracia);
+    toggleGracia();
+
+
+    /* ── Seguros "Otro" ──────────────────────────────────────── */
+    function toggleOtro(selId, panelId, inputId) {
+        const sel   = document.getElementById(selId);
+        const panel = document.getElementById(panelId);
+        const input = document.getElementById(inputId);
+
+        function update() {
+            const esOtro = sel.value === 'OTRO';
+            panel.classList.toggle('d-none', !esOtro);
+            if (input) input.disabled = !esOtro;
+        }
+
+        sel.addEventListener('change', update);
+        update();
+    }
+
+    toggleOtro('sel-desgravamen', 'otro-desgravamen', 'inp-desgravamen-custom');
+    toggleOtro('sel-vehicular',   'otro-vehicular',   'inp-vehicular-custom');
+
+
+    /* ── Fecha de inicio: restricciones min/max dinámicas ──────── */
+    const fechaInput = document.getElementById('id_fecha_inicio');
+    const errFecha   = document.getElementById('err-fecha-inicio');
+
+    if (fechaInput) {
+        const hoy = new Date();
+        const max = new Date(hoy);
+        max.setFullYear(max.getFullYear() + 1);
+
+        fechaInput.min = toYMD(hoy);
+        fechaInput.max = toYMD(max);
+
+        fechaInput.addEventListener('change', function () {
+            const val = new Date(this.value + 'T00:00:00');
+            if (val < hoy) {
+                fechaInput.classList.add('is-invalid');
+                errFecha.textContent = 'La fecha no puede ser anterior a hoy.';
+                errFecha.style.display = 'block';
+            } else if (val > max) {
+                fechaInput.classList.add('is-invalid');
+                errFecha.textContent = `La fecha no puede superar el ${toYMD(max)}.`;
+                errFecha.style.display = 'block';
+            } else {
+                fechaInput.classList.remove('is-invalid');
+                errFecha.style.display = 'none';
+            }
+        });
+    }
+
+})();
+</script>
+
 {% endblock %}

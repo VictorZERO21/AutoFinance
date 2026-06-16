@@ -124,14 +124,22 @@ class Prestamo(models.Model):
         "Cuota inicial (%)",
         max_digits=5,
         decimal_places=2,
+<<<<<<< HEAD
         validators=[MinValueValidator(Decimal("10")), MaxValueValidator(Decimal("30"))],
+=======
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("40"))],
+>>>>>>> 019faf4d4d4a342f01fac98f275516d8b156a7cc
     )
     cuota_balon_pct = models.DecimalField(
         "Cuota balon (%)",
         max_digits=5,
         decimal_places=2,
         default=Decimal("0"),
+<<<<<<< HEAD
         validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("30"))],
+=======
+        validators=[MinValueValidator(Decimal("0")), MaxValueValidator(Decimal("40"))],
+>>>>>>> 019faf4d4d4a342f01fac98f275516d8b156a7cc
     )
 
     # Tasa de interes
@@ -142,7 +150,11 @@ class Prestamo(models.Model):
         "Valor de la tasa (%)",
         max_digits=6,
         decimal_places=4,
+<<<<<<< HEAD
         validators=[MinValueValidator(Decimal("0"))],
+=======
+        validators=[MinValueValidator(Decimal("8")), MaxValueValidator(Decimal("25"))],
+>>>>>>> 019faf4d4d4a342f01fac98f275516d8b156a7cc
     )
 
     # Plazo y gracia
@@ -254,5 +266,29 @@ class Cronograma(models.Model):
         ordering = ["prestamo", "nro_cuota"]
         unique_together = ("prestamo", "nro_cuota")
 
+<<<<<<< HEAD
+=======
+    @property
+    def cuota_base(self):
+        """Cuota sin seguro vehicular.
+
+        GT  → 0
+        GP  → interés (capital no se mueve)
+        ORD → cuota_total - seguro_vehicular  (ambos son constantes de contrato,
+              por lo que la resta es estable y no acumula error de redondeo)
+        BAL → interes + amort + desgravamen (solo una fila; el balón ya va en
+              cuota_total pero no en cuota_base)
+        """
+        tp = self.tipo_periodo
+        if tp == self.TipoPeriodo.GRACIA_TOTAL:
+            return self.interes.__class__(0)
+        if tp == self.TipoPeriodo.GRACIA_PARCIAL:
+            return self.interes
+        if tp == self.TipoPeriodo.ORDINARIO:
+            return self.cuota_total - self.seguro_vehicular
+        # CUOTA_BALON
+        return self.interes + self.amortizacion + self.seguro_desgravamen
+
+>>>>>>> 019faf4d4d4a342f01fac98f275516d8b156a7cc
     def __str__(self):
         return f"Prestamo #{self.prestamo_id} - Cuota {self.nro_cuota}"

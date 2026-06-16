@@ -18,34 +18,63 @@ Dependencias:
 ================================================================================
 DOS DECISIONES DE MODELADO (prompt vs. mockups)
 ================================================================================
-Al verificar el motor contra los numeros de los mockups encontre dos puntos
-donde el TEXTO del prompt y los NUMEROS del mockup no coinciden. Por defecto el
-motor reproduce el MOCKUP; ambos comportamientos son configurables:
-
 1) CUOTA BALON
-   - Texto del prompt: "porcentaje del prestamo original".
-   - Numeros del mockup: 20% x 25,000 (precio) = 5,000  ->  base = PRECIO.
-   - Por defecto: cuota_balon_base="PRECIO" (coincide con el mockup y con la
-     convencion de "Compra Inteligente": el balon es el valor residual del auto).
-     Use cuota_balon_base="FINANCIADO" para aplicar el texto literal del prompt.
+   - Por defecto: cuota_balon_base="PRECIO"  (20% x precio = balon).
+     Use cuota_balon_base="FINANCIADO" para basar el balon en el importe prestado.
 
 2) SEGURO VEHICULAR
-   - Texto del prompt: "tasa anual, se divide entre 12".
-   - Numeros del mockup: 0.4050% x 25,000 = 101.25 mensual (tasa aplicada directa).
-   - Por defecto: seguro_vehicular_es_anual=False (la tasa ya es mensual; mockup).
-     Use seguro_vehicular_es_anual=True para dividir la tasa entre 12.
+   - La tasa ingresada es siempre ANUAL; se divide entre 12 para el monto mensual.
+     Formula: (precio_bien * tasa_anual) / 12.
 
-Nota sobre los indicadores del mockup (TIR 1.5249% / TCEA 19.91%): se calcularon
-congelando la cuota en 1,146.61 (desgravamen fijo). Este motor respeta la regla
-del prompt -"desgravamen sobre el saldo inicial DE CADA MES"- por lo que el
-desgravamen baja con el saldo y la TIR resulta ~1.4941% / TCEA ~19.48%.
+================================================================================
+ARQUITECTURA DE CALCULO: PMT DINAMICO + FLUJO REAL
+================================================================================
+PROBLEMA RESUELTO:
+  El motor anterior usaba una CUOTA_BASE_UNIFICADA calculada una sola vez antes
+  del bucle ordinario. Eso diverge de Excel porque:
+    a) El saldo post-gracia acumula error de punto flotante.
+    b) El redondeo de esa constante unica difiere del redondeo de Excel fila a fila.
+
+SOLUCION: PMT dinamico por periodo
+  En cada iteracion ordinaria se llama a npf.pmt(tasa_pmt, n_rest, saldo, -vf).
+  Esto replica exactamente la funcion PAGO() de Excel (IEEE 754 double), y ademas
+  es autocorrectivo: cualquier deriva de centimo en el saldo queda absorbida por
+  el PMT del siguiente periodo.
+
+  tasa_pmt = TEP + tasa_desgravamen  (tasa compuesta, misma que usa Excel)
+  n_rest   = n_ord - j + 1           (periodos restantes incluyendo el actual)
+
+FLUJO REAL PARA VAN/TIR:
+  En Gracia Total la cuota_total es 0 (convencion contable), pero el deudor
+  IGUALMENTE paga desgravamen + seguro vehicular. El campo flujo_caja_periodo
+  captura ese desembolso real para alimentar npf.irr / npf.npv con precision.
+
+PRECISION: MODELO DE DOBLE CAPA
+  - PMT calculado en float IEEE 754 (= Excel). Convertido a Decimal via str().
+  - Toda la aritmetica del periodo (interes, amort, saldo) en Decimal puro.
+  - Sin ningun round() dentro del bucle.
+  - redondear_excel() (ROUND_HALF_UP) SOLO en _fila() al escribir el dict.
 """
 from __future__ import annotations
 
 import calendar
 from datetime import date
+from decimal import Decimal, ROUND_HALF_UP
 
 import numpy_financial as npf
+
+
+# ---------------------------------------------------------------------------
+# Redondeo compatible con Excel (ROUND_HALF_UP)
+# ---------------------------------------------------------------------------
+def redondear_excel(valor) -> Decimal:
+    """Convierte `valor` a Decimal y redondea a 2 decimales con ROUND_HALF_UP.
+
+    Normaliza -0.00 a 0.00 (artefacto de la ultima cuota cuando el saldo
+    residual es un epsilon negativo infinitesimal).
+    """
+    result = Decimal(str(valor)).quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+    return Decimal("0.00") if result == 0 else result
 
 
 def _sumar_meses(fecha: date, meses: int) -> date:
@@ -60,11 +89,10 @@ def _sumar_meses(fecha: date, meses: int) -> date:
 class FinancialEngine:
     """Genera el cronograma de pagos y los indicadores financieros."""
 
-    # Tipos de periodo del cronograma
-    GRACIA_TOTAL = "GRACIA_TOTAL"
+    GRACIA_TOTAL   = "GRACIA_TOTAL"
     GRACIA_PARCIAL = "GRACIA_PARCIAL"
-    ORDINARIO = "ORDINARIO"
-    CUOTA_BALON = "CUOTA_BALON"
+    ORDINARIO      = "ORDINARIO"
+    CUOTA_BALON    = "CUOTA_BALON"
 
     def __init__(
         self,
@@ -84,23 +112,22 @@ class FinancialEngine:
         seguro_vehicular_es_anual=False,   # True -> tasa/12
         capitalizaciones_nominal=12,       # solo si tipo_tasa = "NOMINAL"
     ):
-        self.precio_bien = float(precio_bien)
-        self.cuota_inicial = float(cuota_inicial)
-        self.cuota_balon_pct = float(cuota_balon_pct) / 100.0
-        self.tipo_tasa = str(tipo_tasa).upper()
-        self.valor_tasa = float(valor_tasa) / 100.0
-        self.plazo_meses = int(plazo_meses)
-        self.tipo_gracia = str(tipo_gracia or "NINGUNA").upper()
-        self.meses_gracia = int(meses_gracia or 0)
-        self.tasa_desgravamen = float(tasa_seguro_desgravamen) / 100.0
-        self.tasa_seguro_vehicular = float(tasa_seguro_vehicular) / 100.0
-        self.cok_anual = float(cok_anual) / 100.0
-        self.fecha_inicio = fecha_inicio
-        self.cuota_balon_base = str(cuota_balon_base).upper()
+        self.precio_bien           = Decimal(str(precio_bien))
+        self.cuota_inicial         = Decimal(str(cuota_inicial))
+        self.cuota_balon_pct       = Decimal(str(cuota_balon_pct)) / Decimal("100")
+        self.tipo_tasa             = str(tipo_tasa).upper()
+        self.valor_tasa            = Decimal(str(valor_tasa)) / Decimal("100")
+        self.plazo_meses           = int(plazo_meses)
+        self.tipo_gracia           = str(tipo_gracia or "NINGUNA").upper()
+        self.meses_gracia          = int(meses_gracia or 0)
+        self.tasa_desgravamen      = Decimal(str(tasa_seguro_desgravamen)) / Decimal("100")
+        self.tasa_seguro_vehicular = Decimal(str(tasa_seguro_vehicular)) / Decimal("100")
+        self.cok_anual             = Decimal(str(cok_anual)) / Decimal("100")
+        self.fecha_inicio          = fecha_inicio
+        self.cuota_balon_base      = str(cuota_balon_base).upper()
         self.seguro_vehicular_es_anual = bool(seguro_vehicular_es_anual)
-        self.m_nominal = int(capitalizaciones_nominal)
+        self.m_nominal             = int(capitalizaciones_nominal)
 
-        # Monto liquido prestado
         self.importe_financiado = self.precio_bien - self.cuota_inicial
 
         if self.tipo_gracia == "NINGUNA":
@@ -109,155 +136,244 @@ class FinancialEngine:
     # ------------------------------------------------------------------ #
     # Conversiones de tasa
     # ------------------------------------------------------------------ #
-    def tem(self) -> float:
-        """Tasa Efectiva Mensual a partir de la tasa de entrada."""
+    def tem(self) -> Decimal:
+        """Tasa Efectiva Mensual.
+
+        La potencia fraccional (^1/12) se calcula en float IEEE 754 y se
+        convierte a Decimal via str() para preservar todos los digitos
+        significativos sin artefactos de la representacion binaria interna.
+        """
         if self.tipo_tasa == "EFECTIVA":
-            # TEA -> TEM, base 30/360 -> exponente 1/12
-            return (1 + self.valor_tasa) ** (1 / 12) - 1
-        # TNA capitalizable m veces al año -> tasa del periodo mensual
+            tem_float = (1 + float(self.valor_tasa)) ** (1 / 12) - 1
+            return Decimal(str(tem_float))
         return self.valor_tasa / self.m_nominal
 
-    def cok_mensual(self) -> float:
-        """COK efectivo mensual para descontar el VAN."""
-        return (1 + self.cok_anual) ** (1 / 12) - 1
+    def cok_mensual(self) -> Decimal:
+        """COK efectivo mensual (TDP) para descontar el VAN."""
+        cok_float = (1 + float(self.cok_anual)) ** (1 / 12) - 1
+        return Decimal(str(cok_float))
 
     # ------------------------------------------------------------------ #
     # Componentes auxiliares
     # ------------------------------------------------------------------ #
-    def _monto_balon(self) -> float:
+    def _monto_balon(self) -> Decimal:
         base = self.precio_bien if self.cuota_balon_base == "PRECIO" else self.importe_financiado
         return base * self.cuota_balon_pct
 
-    def _seguro_vehicular_mensual(self) -> float:
-        if self.seguro_vehicular_es_anual:
-            return (self.tasa_seguro_vehicular / 12) * self.precio_bien
-        return self.tasa_seguro_vehicular * self.precio_bien
-
-    def _cuota_constante(self, saldo: float, n: int, valor_futuro: float, i: float) -> float:
-        """
-        Cuota fija R (interes + amortizacion) del metodo frances, descontando
-        el valor presente de la Cuota Balon (valor futuro al periodo n).
-
-            PV = R * [1 - (1+i)^-n]/i  +  VF * (1+i)^-n
-        """
-        if n <= 0:
-            return 0.0
-        if i == 0:
-            return (saldo - valor_futuro) / n
-        factor_anualidad = (1 - (1 + i) ** -n) / i
-        return (saldo - valor_futuro * (1 + i) ** -n) / factor_anualidad
+    def _seguro_vehicular_mensual(self) -> Decimal:
+        # Tasa siempre anual → cuotas_por_año = 360/30 = 12
+        return (self.tasa_seguro_vehicular * self.precio_bien) / Decimal("12")
 
     # ------------------------------------------------------------------ #
     # Cronograma
     # ------------------------------------------------------------------ #
     def generar_cronograma(self) -> list[dict]:
-        """Devuelve el cronograma como lista de diccionarios (una fila por cuota)."""
-        i = self.tem()
-        valor_futuro = self._monto_balon()
-        seguro_veh = self._seguro_vehicular_mensual()
-        # NUEVO: Calculamos el desgravamen fijo sobre el precio del bien
-        desgravamen_fijo = self.precio_bien * self.tasa_desgravamen
-        filas: list[dict] = []
-        saldo = self.importe_financiado
+        """Devuelve el cronograma completo como lista de diccionarios.
 
-        # ---- Fase de gracia ----
+        Cada fila incluye 'flujo_caja_periodo': el desembolso real del deudor
+        para ese mes. Difiere de 'cuota_total' en Gracia Total, donde la cuota
+        contable es 0 pero el deudor efectivamente paga desgravamen + seg.veh.
+        """
+        i       = self.tem()
+        vf      = self._monto_balon()
+        seg_veh = self._seguro_vehicular_mensual()
+        tasa_dg = self.tasa_desgravamen
+
+        # Tasa compuesta para PMT = TEP + desgravamen (replica PAGO() de Excel)
+        tasa_pmt_f = float(i) + float(tasa_dg)
+        vf_f       = float(vf)
+        n_ord      = self.plazo_meses - self.meses_gracia
+
+        filas: list[dict] = []
+        saldo = self.importe_financiado   # Decimal puro; NUNCA se redondea
+
+        D0 = Decimal("0")
+
+        # ── Fase de Gracia ───────────────────────────────────────────────
         for k in range(1, self.meses_gracia + 1):
-            interes = saldo * i
-            desgravamen = desgravamen_fijo
+            interes     = saldo * i
+            desgravamen = saldo * tasa_dg
 
             if self.tipo_gracia == "TOTAL":
-                # Cuota = 0. Interes y seguros se capitalizan (el saldo crece).
-                cuota = 0.0
-                saldo_final = saldo + interes + desgravamen + seguro_veh
-                tipo = self.GRACIA_TOTAL
+                # Cuota contable = 0. Solo el interes capitaliza al saldo.
+                # Flujo real: el deudor paga desgravamen + seguro vehicular
+                # (no capitalizan; salen de su bolsillo y forman parte del VAN).
+                cuota_base   = D0
+                amortizacion = D0
+                saldo_final  = saldo + interes
+                cuota_total  = D0
+                flujo        = desgravamen + seg_veh
+                tipo         = self.GRACIA_TOTAL
             else:  # PARCIAL
-                # Paga intereses + seguros. Amortizacion 0. Saldo intacto.
-                cuota = interes + desgravamen + seguro_veh
-                saldo_final = saldo
-                tipo = self.GRACIA_PARCIAL
+                cuota_base   = interes
+                amortizacion = D0
+                saldo_final  = saldo
+                cuota_total  = cuota_base + desgravamen + seg_veh
+                flujo        = cuota_total
+                tipo         = self.GRACIA_PARCIAL
 
-            filas.append(
-                self._fila(k, tipo, interes, 0.0, desgravamen, seguro_veh, cuota, saldo, saldo_final)
-            )
+            filas.append(self._fila(
+                k, tipo, interes, amortizacion, desgravamen,
+                seg_veh, cuota_total, flujo, saldo, saldo_final, cuota_base,
+            ))
             saldo = saldo_final
 
-        # ---- Fase ordinaria ----
-        n_ordinario = self.plazo_meses - self.meses_gracia
-        R = self._cuota_constante(saldo, n_ordinario, valor_futuro, i)
+        # ── Fase Ordinaria: PMT dinamico en cada periodo ──────────────────
+        #
+        # Por que dinamico en vez de constante?
+        #   npf.pmt(tasa_pmt_f, n_rest, saldo, -vf) reproduce exactamente
+        #   la celda PAGO() de Excel. Al recalcular con el saldo real de cada
+        #   periodo, cualquier centimo de deriva queda absorbido automaticamente,
+        #   y la cuota converge a la que Excel mostraria en esa misma celda.
+        for j in range(1, n_ord + 1):
+            k        = self.meses_gracia + j
+            n_rest   = n_ord - j + 1        # periodos restantes incluyendo este
+            es_balon = (j == n_ord) and (vf > D0)
 
-        for j in range(1, n_ordinario + 1):
-            k = self.meses_gracia + j
-            interes = saldo * i
-            amortizacion = R - interes
-            desgravamen = saldo * self.tasa_desgravamen
-            cuota = R + desgravamen + seguro_veh
-            saldo_final = saldo - amortizacion
-
-            es_ultima = j == n_ordinario
-            if es_ultima and valor_futuro > 0:
-                # Ultimo mes ordinario: paga su cuota regular + la Cuota Balon.
-                cuota += valor_futuro
-                saldo_final -= valor_futuro
-                tipo = self.CUOTA_BALON
+            # PMT en IEEE 754 float (identico a Excel PAGO).
+            # npf.pmt devuelve negativo (desembolso); negamos -> positivo.
+            # fv = -vf: al final de n_rest periodos el saldo residual es vf
+            # (se amortiza hasta vf, luego se paga el balon por separado).
+            if tasa_pmt_f != 0 and n_rest > 0:
+                cuota_pmt_f = -float(npf.pmt(tasa_pmt_f, n_rest, float(saldo), -vf_f))
             else:
-                tipo = self.ORDINARIO
+                cuota_pmt_f = (float(saldo) - vf_f) / max(n_rest, 1)
 
-            filas.append(
-                self._fila(
-                    k, tipo, interes, amortizacion, desgravamen, seguro_veh,
-                    cuota, saldo, max(saldo_final, 0.0),
-                )
-            )
+            # Aritmetica del periodo en Decimal puro (sin redondeo intermedio)
+            cuota_base_raw = Decimal(str(cuota_pmt_f))
+            interes        = saldo * i
+            desgravamen    = saldo * tasa_dg
+            amortizacion   = cuota_base_raw - interes - desgravamen
+            saldo_final    = saldo - amortizacion
+
+            if es_balon:
+                # El deudor paga la cuota ordinaria + el globo residual.
+                # Matematicamente saldo_final ≈ vf antes de este bloque;
+                # restar vf cierra el saldo en 0.00.
+                cuota_total = cuota_base_raw + seg_veh + vf
+                saldo_final = saldo_final - vf
+                tipo        = self.CUOTA_BALON
+            else:
+                cuota_total = cuota_base_raw + seg_veh
+                tipo        = self.ORDINARIO
+
+            flujo = cuota_total
+
+            filas.append(self._fila(
+                k, tipo, interes, amortizacion, desgravamen,
+                seg_veh, cuota_total, flujo, saldo, saldo_final, cuota_base_raw,
+            ))
             saldo = saldo_final
 
         return filas
 
-    def _fila(self, nro, tipo, interes, amort, desg, seg_veh, cuota, saldo_ini, saldo_fin) -> dict:
+    def _fila(
+        self, nro, tipo, interes, amort, desg, seg_veh,
+        cuota, flujo, saldo_ini, saldo_fin, cb_ex,
+    ) -> dict:
+        """Aplica ROUND_HALF_UP UNICAMENTE aqui, al escribir el dict de salida."""
+        R = redondear_excel
         return {
-            "nro_cuota": nro,
-            "tipo_periodo": tipo,
-            "fecha_vencimiento": _sumar_meses(self.fecha_inicio, nro),
-            "saldo_inicial": round(saldo_ini, 2),
-            "interes": round(interes, 2),
-            "amortizacion": round(amort, 2),
-            "seguro_desgravamen": round(desg, 2),
-            "seguro_vehicular": round(seg_veh, 2),
-            "cuota_total": round(cuota, 2),
-            "saldo_final": round(saldo_fin, 2),
+            "nro_cuota":          nro,
+            "tipo_periodo":       tipo,
+            "fecha_vencimiento":  _sumar_meses(self.fecha_inicio, nro),
+            "saldo_inicial":      R(saldo_ini),
+            "interes":            R(interes),
+            "amortizacion":       R(amort),
+            "cuota_base":         R(cb_ex),
+            "seguro_desgravamen": R(desg),
+            "seguro_vehicular":   R(seg_veh),
+            "cuota_total":        R(cuota),
+            "flujo_caja_periodo": R(flujo),   # desembolso real para VAN/TIR
+            "saldo_final":        R(saldo_fin),
         }
 
     # ------------------------------------------------------------------ #
     # Indicadores SBS
     # ------------------------------------------------------------------ #
     def calcular_indicadores(self, cronograma: list[dict]) -> dict:
-        """Calcula importe financiado, cuota ordinaria, TCEA, TIR mensual y VAN."""
-        # Flujo de caja: mes 0 = +importe financiado; meses 1..N = -cuota total.
-        flujo = [self.importe_financiado] + [-f["cuota_total"] for f in cronograma]
+        """Calcula importe financiado, cuota ordinaria, TCEA, TIR mensual y VAN.
+
+        CONVENCION DE SIGNOS (replica Celda T26 del Excel del usuario):
+        ┌─────────────────────────────────────────────────────────────────┐
+        │  t = 0  :  +importe_financiado  (dinero QUE RECIBE el deudor)  │
+        │  t > 0  :  -desembolso_real     (dinero QUE PAGA el deudor)    │
+        │                                                                 │
+        │  desembolso_real = cuota_base + seg_desgravamen + seg_vehicular │
+        │                    [+ balon en el periodo balón]                │
+        │                                                                 │
+        │  GRACIA TOTAL: cuota contable = 0, pero desembolso_real > 0    │
+        │  porque el deudor sí paga desgravamen + seguro vehicular.      │
+        │  Por eso se usa flujo_caja_periodo (no cuota_total).           │
+        └─────────────────────────────────────────────────────────────────┘
+
+        NOTA SOBRE EL VAN:
+        La formula Excel del usuario es:  prestamo + VNA(TDP, pagos_negativos)
+        Excel VNA descuenta desde el periodo 1:
+            VNA_excel(r, [-f1, ..., -fN]) = -f1/(1+r)^1 + ... + -fN/(1+r)^N
+
+        numpy_financial.npv descuenta desde el periodo 0 (no el 1), por lo que
+        npf.npv(r, [-f1,...,-fN]) != Excel_VNA(r, [-f1,...,-fN]).
+        El equivalente CORRECTO de 'prestamo + VNA_excel(TDP, pagos)' en numpy es:
+            npf.npv(TDP, [+prestamo, -f1, ..., -fN])
+        Esto garantiza que f1 se descuenta en (1+TDP)^1, no en (1+TDP)^0.
+        """
+        # ── t=0: dinero que el banco entrega al deudor (POSITIVO) ────────
+        flujo_t0 = float(self.importe_financiado)
+
+        # ── t=1..N: desembolsos reales del deudor (ESTRICTAMENTE NEGATIVOS)
+        # -abs() garantiza el signo correcto aunque flujo_caja_periodo
+        # llegara con signo incorrecto por un bug futuro.
+        flujos_periodos = [
+            -abs(float(f["flujo_caja_periodo"])) for f in cronograma
+        ]
+
+        # Array completo [+prestamo, -pago_1, -pago_2, ..., -pago_N]
+        flujo_van = [flujo_t0] + flujos_periodos
 
         try:
-            tir_mensual = float(npf.irr(flujo))
+            tir_mensual = float(npf.irr(flujo_van))
         except Exception:
             tir_mensual = float("nan")
 
-        tcea = (1 + tir_mensual) ** 12 - 1
-        van = float(npf.npv(self.cok_mensual(), flujo))
+        # TCEA base 30/360: (1 + TIR_mensual)^(360/30) - 1
+        tcea = (1 + tir_mensual) ** (360 / 30) - 1
+
+        # TDP = COK efectivo mensual base 30/360  = (1+COK_anual)^(30/360) - 1
+        tdp = float(self.cok_mensual())
+
+        # VAN = prestamo + VNA(TDP, pagos_negativos)
+        # Implementado como npf.npv del array completo:
+        #   npf.npv(TDP, [p, -f1, ..., -fN])
+        #   = p + (-f1)/(1+TDP)^1 + ... + (-fN)/(1+TDP)^N   [correcto]
+        van = float(npf.npv(tdp, flujo_van))
 
         ordinarias = [
             f["cuota_total"]
             for f in cronograma
             if f["tipo_periodo"] in (self.ORDINARIO, self.CUOTA_BALON)
         ]
-        cuota_ordinaria = ordinarias[0] if ordinarias else 0.0
+        cuota_ordinaria = ordinarias[0] if ordinarias else Decimal("0")
+
+        bases_ord = [
+            f["cuota_base"]
+            for f in cronograma
+            if f["tipo_periodo"] == self.ORDINARIO
+        ]
+        cuota_base_ordinaria = bases_ord[0] if bases_ord else Decimal("0")
 
         return {
-            "importe_financiado": round(self.importe_financiado, 2),
-            "cuota_ordinaria": round(cuota_ordinaria, 2),
-            "duracion_meses": self.plazo_meses,
-            "tem": tir_mensual if False else round(self.tem(), 8),
-            "tcea": round(tcea, 6),
-            "tir_mensual": round(tir_mensual, 6),
-            "van": round(van, 2),
-            "flujo_caja": [round(x, 2) for x in flujo],
+            "importe_financiado":   redondear_excel(self.importe_financiado),
+            "cuota_ordinaria":      cuota_ordinaria,       # con seguro veh.
+            "cuota_base_ordinaria": cuota_base_ordinaria,  # sin seguro veh.
+            "duracion_meses":       self.plazo_meses,
+            "tem":                  round(float(self.tem()), 8),
+            "tcea":                 round(tcea, 6),
+            "tcea_pct":             round(tcea * 100, 4),
+            "tir_mensual":          round(tir_mensual, 6),
+            "tir_mensual_pct":      round(tir_mensual * 100, 4),
+            "van":                  redondear_excel(van),
+            "flujo_caja":           [round(x, 2) for x in flujo_van],
         }
 
     # ------------------------------------------------------------------ #
@@ -265,13 +381,13 @@ class FinancialEngine:
     # ------------------------------------------------------------------ #
     def procesar(self) -> tuple[list[dict], dict]:
         """Devuelve (cronograma, indicadores)."""
-        cronograma = self.generar_cronograma()
+        cronograma  = self.generar_cronograma()
         indicadores = self.calcular_indicadores(cronograma)
         return cronograma, indicadores
 
 
 # ---------------------------------------------------------------------------
-# Integracion con Django: construir el motor desde una instancia Prestamo
+# Integracion con Django
 # ---------------------------------------------------------------------------
 def engine_desde_prestamo(prestamo) -> FinancialEngine:
     """Crea un FinancialEngine a partir de una instancia del modelo Prestamo."""
@@ -295,6 +411,8 @@ def guardar_cronograma(prestamo, cronograma: list[dict]):
     """
     Persiste el cronograma en la BD (modelo Cronograma).
     Reemplaza cualquier cronograma previo del prestamo.
+    Los valores son Decimal (ROUND_HALF_UP), compatibles con DecimalField.
+    flujo_caja_periodo es un campo de calculo; no se persiste en la BD.
     """
     from .models import Cronograma  # import diferido para evitar ciclos
 
@@ -319,7 +437,7 @@ def guardar_cronograma(prestamo, cronograma: list[dict]):
 
 
 # ---------------------------------------------------------------------------
-# Prueba rapida (replica el escenario de los mockups)
+# Prueba rapida en consola (replica el escenario de los mockups)
 # ---------------------------------------------------------------------------
 if __name__ == "__main__":
     motor = FinancialEngine(
@@ -337,8 +455,24 @@ if __name__ == "__main__":
         fecha_inicio=date(2026, 4, 7),
     )
     cronograma, indicadores = motor.procesar()
-    for fila in cronograma:
-        print(fila)
+
+    header = (
+        f"{'N':>3} {'TIPO':<14} {'SALDO_INI':>11} {'INTERES':>9} "
+        f"{'AMORT':>10} {'CUOTA_BASE':>11} {'DESGR':>8} "
+        f"{'SEG_VEH':>9} {'CUOTA_TOT':>11} {'FLUJO':>11} {'SALDO_FIN':>11}"
+    )
+    print(header)
+    print("-" * len(header))
+    for f in cronograma:
+        print(
+            f"{f['nro_cuota']:>3} {f['tipo_periodo']:<14} "
+            f"{f['saldo_inicial']:>11} {f['interes']:>9} "
+            f"{f['amortizacion']:>10} {f['cuota_base']:>11} "
+            f"{f['seguro_desgravamen']:>8} {f['seguro_vehicular']:>9} "
+            f"{f['cuota_total']:>11} {f['flujo_caja_periodo']:>11} "
+            f"{f['saldo_final']:>11}"
+        )
+
     print("\nINDICADORES:")
     for clave, valor in indicadores.items():
         if clave != "flujo_caja":

@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoFinance - Cargando...</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .loader {
+            text-align: center;
+            color: white;
+        }
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid rgba(255, 255, 255, 0.3);
+            border-top: 4px solid white;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        h1 {
+            margin: 0;
+            font-size: 32px;
+        }
+    </style>
+</head>
+<body>
+    <div class="loader">
+        <div class="spinner"></div>
+        <h1>AutoFinance</h1>
+        <p>Conectando con el servidor...</p>
+    </div>
+
+    <script>
+        // Redirect to the Django app running on Cloud Run
+        // Replace CLOUD_RUN_URL with your actual Cloud Run URL
+        const CLOUD_RUN_URL = localStorage.getItem('cloudRunUrl') || 'http://localhost:8000';
+        
+        window.location.href = CLOUD_RUN_URL + '/';
+    </script>
+</body>
+</html>

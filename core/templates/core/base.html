@@ -32,7 +32,7 @@
     <nav class="navbar navbar-expand-lg navbar-light mb-4 py-3">
         <div class="container">
             <!-- Logo -->
-            <a class="navbar-brand brand-text fs-4" href="/catalogo/">
+            <a class="navbar-brand brand-text fs-4" href="/catalog/">
                 <strong>AF AutoFinance</strong>
             </a>
 
@@ -40,16 +40,16 @@
             <div class="collapse navbar-collapse justify-content-center">
                 <ul class="navbar-nav mb-2 mb-lg-0 gap-4">
                     <li class="nav-item">
-                        <a class="nav-link-af {% if '/catalogo/' in request.path %}activo{% endif %}"
-                           href="/catalogo/">Catálogo</a>
+                        <a class="nav-link-af {% if '/catalog/' in request.path %}activo{% endif %}"
+                           href="/catalog/">Catálogo</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link-af {% if '/simular/' in request.path or '/prestamo/' in request.path %}activo{% endif %}"
+                        <a class="nav-link-af {% if '/simulate/' in request.path or '/loan/' in request.path %}activo{% endif %}"
                            href="#">Préstamos</a>
                     </li>
                     <li class="nav-item">
-                        <a class="nav-link-af {% if '/clientes/' in request.path %}activo{% endif %}"
-                           href="/clientes/">Clientes</a>
+                        <a class="nav-link-af {% if '/clients/' in request.path %}activo{% endif %}"
+                           href="/clients/">Clientes</a>
                     </li>
                 </ul>
             </div>

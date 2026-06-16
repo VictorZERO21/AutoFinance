@@ -5,14 +5,14 @@ urlpatterns = [
     # Web views (con sesiones)
     path('', views.home, name='home'),
     path('login/', views.login_view, name='login'),
-    path('register/', views.register_view, name='register'),
+    path('signup/', views.register_view, name='signup'),
     path('logout/', views.logout_view, name='logout'),
     
     # Catálogo y simulador
-    path('catalogo/', views.catalogo_vehiculos, name='catalogo'),
-    path('simular/<int:vehiculo_id>/', views.simular_prestamo, name='simular'),
-    path('prestamo/<int:prestamo_id>/', views.detalle_prestamo, name='detalle_prestamo'),
-    path('clientes/', views.lista_clientes, name='clientes'),
+    path('catalog/', views.catalogo_vehiculos, name='catalog'),
+    path('simulate/<int:vehiculo_id>/', views.simular_prestamo, name='simulate'),
+    path('loan/<int:prestamo_id>/', views.detalle_prestamo, name='loan'),
+    path('clients/', views.lista_clientes, name='clients'),
     
     # API endpoints (con JWT)
     path('api/login/', views.api_login, name='api_login'),

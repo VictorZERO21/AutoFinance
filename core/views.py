@@ -24,7 +24,7 @@ from .serializers import LoginSerializer, CustomTokenObtainPairSerializer, Usuar
 def login_view(request):
     """Vista de login"""
     if request.user.is_authenticated:
-        return redirect('catalogo')
+        return redirect('catalog')
     
     if request.method == 'POST':
         email = request.POST.get('email')
@@ -36,7 +36,7 @@ def login_view(request):
             
             if user is not None:
                 login(request, user)
-                return redirect('catalogo')
+                return redirect('catalog')
             else:
                 messages.error(request, 'Email o contraseña incorrectos')
         except Usuario.DoesNotExist:
@@ -48,7 +48,7 @@ def login_view(request):
 def register_view(request):
     """Vista de registro - muestra el formulario de registro"""
     if request.user.is_authenticated:
-        return redirect('catalogo')
+        return redirect('catalog')
     
     return render(request, 'core/register.html')
 
@@ -62,7 +62,7 @@ def logout_view(request):
 def home(request):
     """Redirige a catálogo si está autenticado, sino a login"""
     if request.user.is_authenticated:
-        return redirect('catalogo')
+        return redirect('catalog')
     return redirect('login')
 
 
@@ -303,7 +303,7 @@ def simular_prestamo(request, vehiculo_id):
             )
             guardar_cronograma(prestamo, cronograma)
 
-            return redirect('detalle_prestamo', prestamo_id=prestamo.id)
+            return redirect('loan', prestamo_id=prestamo.id)
 
     else:
         # El precio del bien se pre-rellena con el precio del catálogo

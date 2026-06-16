@@ -605,7 +605,7 @@
             </form>
 
             <div class="form-footer">
-                <p>¿No tienes cuenta? <a href="/register/">Regístrate gratis</a></p>
+                <p>¿No tienes cuenta? <a href="/signup/">Regístrate gratis</a></p>
             </div>
         </div>
     </div>
@@ -741,7 +741,7 @@
                     localStorage.setItem('usuario', JSON.stringify(data.usuario));
 
                     // Redirigir al catálogo
-                    window.location.href = '/catalogo/';
+                    window.location.href = '/catalog/';
                 } else {
                     // Mostrar errores
                     const errors = data;

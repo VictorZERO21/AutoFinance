@@ -27,7 +27,7 @@
              id="card-{{ vehiculo.id }}"
              data-vehiculo-id="{{ vehiculo.id }}"
              data-vehiculo-nombre="{{ vehiculo.anio }} {{ vehiculo.marca }} {{ vehiculo.modelo }}"
-             data-simular-url=\"{% url 'simulate' vehiculo.id %}\">
+             data-simular-url="{% url 'simulate' vehiculo.id %}">
             <img src="{% if vehiculo.imagen_url %}{% static vehiculo.imagen_url %}{% else %}{% static 'imagenes/carro.png' %}{% endif %}"
                  class="card-img-top" style="object-fit: cover; height: 180px;"
                  alt="{{ vehiculo.marca }} {{ vehiculo.modelo }}">

@@ -119,7 +119,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/6.0/howto/static-files/
 
 STATIC_URL = 'static/'
-<<<<<<< HEAD
+
 AUTH_USER_MODEL = 'core.Usuario'
 
 # REST Framework Configuration
@@ -154,6 +154,3 @@ SIMPLE_JWT = {
         'rest_framework_simplejwt.tokens.AccessToken',
     ),
 }
-=======
-AUTH_USER_MODEL = 'core.Usuario'
->>>>>>> 019faf4d4d4a342f01fac98f275516d8b156a7cc

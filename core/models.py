@@ -38,6 +38,8 @@ class Usuario(AbstractUser):
         "DNI",
         max_length=8,
         unique=True,
+        blank=True,
+        null=True,
         validators=[RegexValidator(r"^\d{8}$", "El DNI debe tener 8 digitos.")],
     )
     nombre_completo = models.CharField("Nombre completo", max_length=150)

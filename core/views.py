@@ -1,12 +1,207 @@
 from django.shortcuts import render, redirect, get_object_or_404
+from django.contrib.auth import authenticate, login, logout
+from django.contrib.auth.decorators import login_required
+from django.contrib import messages
 from datetime import date
+from rest_framework import status
+from rest_framework.decorators import api_view, permission_classes
+from rest_framework.response import Response
+from rest_framework.permissions import AllowAny, IsAuthenticated
+from rest_framework_simplejwt.tokens import RefreshToken
 from .models import Vehiculo, Prestamo, Usuario
 from .engine import FinancialEngine, guardar_cronograma
+from .serializers import LoginSerializer, CustomTokenObtainPairSerializer, UsuarioSerializer, RegisterSerializer
 
+def login_view(request):
+    """Vista de login"""
+    if request.user.is_authenticated:
+        return redirect('catalogo')
+    
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+        
+        try:
+            # Buscar usuario por email
+            user = Usuario.objects.get(email=email)
+            # Autenticar con username (Django usa username por defecto)
+            user = authenticate(request, username=user.username, password=password)
+            
+            if user is not None:
+                login(request, user)
+                return redirect('catalogo')
+            else:
+                messages.error(request, 'Email o contraseña incorrectos')
+        except Usuario.DoesNotExist:
+            messages.error(request, 'Email o contraseña incorrectos')
+    
+    return render(request, 'core/login.html')
+
+def register_view(request):
+    """Vista de registro - muestra el formulario de registro"""
+    if request.user.is_authenticated:
+        return redirect('catalogo')
+    
+    return render(request, 'core/register.html')
+
+def logout_view(request):
+    """Vista de logout - cierra sesión Django y redirige a login"""
+    logout(request)
+    return redirect('login')
+
+# ============================================================================
+# API VIEWS - JWT AUTHENTICATION
+# ============================================================================
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_login(request):
+    """
+    Endpoint de login que retorna JWT tokens
+    POST /api/login/
+    {
+        "email": "usuario@email.com",
+        "password": "contraseña"
+    }
+    """
+    serializer = LoginSerializer(data=request.data)
+    if serializer.is_valid():
+        user = serializer.validated_data['user']
+        
+        # Crear sesión Django (para web)
+        login(request, user)
+        
+        # Crear tokens JWT (para API)
+        refresh = RefreshToken.for_user(user)
+        
+        return Response({
+            'access': str(refresh.access_token),
+            'refresh': str(refresh),
+            'usuario': {
+                'id': user.id,
+                'username': user.username,
+                'email': user.email,
+                'nombre_completo': user.nombre_completo,
+                'dni': user.dni,
+                'rol': user.rol,
+                'is_staff': user.is_staff,
+            }
+        }, status=status.HTTP_200_OK)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_refresh_token(request):
+    """
+    Endpoint para refrescar el JWT access token
+    POST /api/refresh-token/
+    {
+        "refresh": "token_de_refresh"
+    }
+    """
+    refresh_token = request.data.get('refresh')
+    
+    if not refresh_token:
+        return Response(
+            {'error': 'Refresh token is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        refresh = RefreshToken(refresh_token)
+        return Response({
+            'access': str(refresh.access_token),
+        }, status=status.HTTP_200_OK)
+    except Exception as e:
+        return Response(
+            {'error': 'Invalid refresh token'},
+            status=status.HTTP_401_UNAUTHORIZED
+        )
+
+
+@api_view(['GET'])
+@permission_classes([IsAuthenticated])
+def api_me(request):
+    """
+    Endpoint para obtener información del usuario autenticado
+    GET /api/me/
+    Headers: Authorization: Bearer <access_token>
+    """
+    serializer = UsuarioSerializer(request.user)
+    return Response(serializer.data, status=status.HTTP_200_OK)
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_logout(request):
+    """
+    Endpoint para logout (invalida el refresh token)
+    POST /api/logout/
+    {
+        "refresh": "token_de_refresh"
+    }
+    """
+    refresh_token = request.data.get('refresh')
+    
+    if not refresh_token:
+        return Response(
+            {'error': 'Refresh token is required'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+    
+    try:
+        refresh = RefreshToken(refresh_token)
+        refresh.blacklist()
+        return Response(
+            {'message': 'Successfully logged out'},
+            status=status.HTTP_200_OK
+        )
+    except Exception as e:
+        return Response(
+            {'error': 'Invalid refresh token'},
+            status=status.HTTP_400_BAD_REQUEST
+        )
+
+
+@api_view(['POST'])
+@permission_classes([AllowAny])
+def api_register(request):
+    """
+    Endpoint para registro de nuevos usuarios
+    POST /api/register/
+    {
+        "email": "nuevo@email.com",
+        "password": "contraseña",
+        "password_confirm": "contraseña"
+    }
+    """
+    serializer = RegisterSerializer(data=request.data)
+    if serializer.is_valid():
+        usuario = serializer.save()
+        return Response({
+            'message': 'Usuario registrado exitosamente',
+            'usuario': {
+                'id': usuario.id,
+                'username': usuario.username,
+                'email': usuario.email,
+            }
+        }, status=status.HTTP_201_CREATED)
+    
+    return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+
+def home(request):
+    if request.user.is_authenticated:
+        return redirect('catalogo')
+    return redirect('login')
+
+@login_required(login_url='login')
 def catalogo_vehiculos(request):
     vehiculos = Vehiculo.objects.all()
     return render(request, 'core/catalogo.html', {'vehiculos': vehiculos})
 
+@login_required(login_url='login')
 def simular_prestamo(request, vehiculo_id):
     vehiculo = get_object_or_404(Vehiculo, id=vehiculo_id)
     
@@ -56,6 +251,7 @@ def simular_prestamo(request, vehiculo_id):
 
     return render(request, 'core/simulador.html', {'vehiculo': vehiculo})
 
+@login_required(login_url='login')
 def detalle_prestamo(request, prestamo_id):
     """Muestra el dashboard rojo con el cronograma del préstamo guardado"""
     prestamo = get_object_or_404(Prestamo, id=prestamo_id)
@@ -76,6 +272,7 @@ def detalle_prestamo(request, prestamo_id):
         'indicadores': indicadores
     })
 
+@login_required(login_url='login')
 def lista_clientes(request):
     """Muestra la tabla de todos los clientes con préstamos"""
     prestamos = Prestamo.objects.all().order_by('-fecha_inicio')

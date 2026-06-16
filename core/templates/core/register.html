@@ -1,0 +1,718 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AutoFinance - Registro</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <style>
+        /* ── RESET ── */
+        *, *::before, *::after { box-sizing: border-box; }
+        html, body { margin: 0; padding: 0; }
+
+        /* ── LAYOUT ── */
+        .wrapper {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 100vh;
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            overflow: hidden;
+        }
+
+        /* ─────────────────────────────────────────
+           LEFT
+           ───────────────────────────────────────── */
+        .left {
+            background: #0e0810;
+            position: relative;
+            overflow: hidden;
+            padding: 3rem 3.5rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+        }
+
+        .left-center {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            gap: 2rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        /* ── FONDO ANIMADO ── */
+        .bg-canvas {
+            position: absolute;
+            inset: 0;
+            z-index: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+
+        .circuit {
+            position: absolute;
+            inset: 0;
+            width: 100%;
+            height: 100%;
+            opacity: 0.18;
+        }
+
+        .orb {
+            position: absolute;
+            border-radius: 50%;
+            pointer-events: none;
+        }
+
+        .orb-1 {
+            width: 620px; height: 620px;
+            top: -260px; left: -160px;
+            background: radial-gradient(circle, rgba(160, 60, 120, 0.55) 0%, rgba(100, 30, 80, 0.2) 45%, transparent 68%);
+            animation: orbFloat1 7s ease-in-out infinite;
+        }
+
+        .orb-2 {
+            width: 420px; height: 420px;
+            bottom: -160px; right: -90px;
+            background: radial-gradient(circle, rgba(90, 35, 80, 0.5) 0%, rgba(60, 20, 55, 0.15) 50%, transparent 68%);
+            animation: orbFloat2 10s ease-in-out infinite;
+        }
+
+        .orb-3 {
+            width: 280px; height: 280px;
+            top: 48%; left: 52%;
+            transform: translate(-50%, -50%);
+            background: radial-gradient(circle, rgba(250, 236, 214, 0.12) 0%, transparent 65%);
+            animation: orbPulse 5s ease-in-out infinite;
+        }
+
+        @keyframes orbFloat1 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            33%       { transform: translate(50px, 35px) scale(1.1); }
+            66%       { transform: translate(-25px, 55px) scale(0.93); }
+        }
+
+        @keyframes orbFloat2 {
+            0%, 100% { transform: translate(0, 0) scale(1); }
+            40%       { transform: translate(-45px, -35px) scale(1.14); }
+            70%       { transform: translate(20px, -55px) scale(0.9); }
+        }
+
+        @keyframes orbPulse {
+            0%, 100% { opacity: 0.4; transform: translate(-50%, -50%) scale(1); }
+            50%       { opacity: 1;   transform: translate(-50%, -50%) scale(1.6); }
+        }
+
+        .speed-lines {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+        }
+
+        .sl {
+            position: absolute;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, rgba(250, 236, 214, 0.35), transparent);
+            animation: slideRight linear infinite;
+        }
+
+        @keyframes slideRight {
+            0%   { transform: translateX(-120%); opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 1; }
+            100% { transform: translateX(220%);  opacity: 0; }
+        }
+
+        .particles { position: absolute; inset: 0; }
+
+        .dot {
+            position: absolute;
+            border-radius: 50%;
+            background: rgba(250, 236, 214, 0.55);
+            animation: floatUp linear infinite;
+        }
+
+        @keyframes floatUp {
+            0%   { transform: translateY(0) scale(1);        opacity: 0; }
+            10%  { opacity: 1; }
+            90%  { opacity: 0.5; }
+            100% { transform: translateY(-130px) scale(0.3); opacity: 0; }
+        }
+
+        /* ── LOGO ── */
+        .logo-area {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            position: relative;
+            z-index: 1;
+        }
+
+        .logo-icon {
+            width: 34px;
+            height: 34px;
+            border-radius: 8px;
+            background: #FAECD6;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+            font-weight: 700;
+            font-size: 18px;
+            color: #0e0810;
+            overflow: hidden;
+        }
+
+        .logo-icon svg { width: 16px; height: 16px; }
+
+        .logo-text {
+            font-size: 13px;
+            font-weight: 600;
+            color: #E4DADA;
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
+        }
+
+        /* ── HERO ── */
+        .hero-content {
+            position: relative;
+        }
+
+        .eyebrow {
+            font-size: 10px;
+            font-weight: 500;
+            color: #FAECD6;
+            opacity: 0.4;
+            letter-spacing: 0.2em;
+            text-transform: uppercase;
+            margin-bottom: 1rem;
+        }
+
+        .hero-title {
+            font-size: 3rem;
+            font-weight: 300;
+            line-height: 1.15;
+            color: #E4DADA;
+            letter-spacing: -0.025em;
+            margin: 0 0 1rem 0;
+        }
+
+        .hero-title strong {
+            font-weight: 600;
+            color: #FAECD6;
+        }
+
+        .hero-sub {
+            font-size: 0.82rem;
+            color: #E4DADA;
+            opacity: 0.38;
+            line-height: 1.7;
+            max-width: 280px;
+            margin: 0 auto;
+        }
+
+        /* ─────────────────────────────────────────
+           RIGHT
+           ───────────────────────────────────────── */
+        .right {
+            background: #1a0f18;
+            padding: 3rem 3rem;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .right::before {
+            content: '';
+            position: absolute;
+            top: -80px; right: -80px;
+            width: 280px; height: 280px;
+            border-radius: 50%;
+            background: radial-gradient(circle, rgba(250, 236, 214, 0.04) 0%, transparent 70%);
+            pointer-events: none;
+            z-index: 0;
+        }
+
+        /* ── FORM HEADER ── */
+        .form-header {
+            margin-bottom: 1.75rem;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-header h2 {
+            font-size: 1.5rem;
+            font-weight: 500;
+            color: #E4DADA;
+            letter-spacing: -0.015em;
+            margin: 0 0 0.3rem 0;
+        }
+
+        .form-header p {
+            font-size: 0.78rem;
+            color: #E4DADA;
+            opacity: 0.3;
+        }
+
+        /* ── FIELDS ── */
+        form { position: relative; z-index: 1; }
+
+        .field { margin-bottom: 1rem; }
+
+        .field label {
+            display: block;
+            font-size: 10px;
+            font-weight: 500;
+            color: #E4DADA;
+            opacity: 0.45;
+            letter-spacing: 0.14em;
+            text-transform: uppercase;
+            margin-bottom: 0.45rem;
+        }
+
+        .input-wrap { position: relative; }
+
+        .input-icon {
+            position: absolute;
+            left: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 14px; height: 14px;
+            opacity: 0.35;
+            pointer-events: none;
+            font-size: 13px;
+        }
+
+        .toggle-password {
+            position: absolute;
+            right: 14px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            color: #E4DADA;
+            opacity: 0.35;
+            cursor: pointer;
+            font-size: 13px;
+            padding: 4px;
+            transition: opacity 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .toggle-password:hover { opacity: 0.6; }
+
+        .field input {
+            width: 100%;
+            padding: 0.75rem 1rem 0.75rem 2.75rem;
+            background: rgba(228, 218, 218, 0.05);
+            border: 1px solid rgba(228, 218, 218, 0.1);
+            border-radius: 10px;
+            color: #E4DADA;
+            font-size: 0.85rem;
+            font-family: inherit;
+            outline: none;
+            transition: border-color 0.2s, background 0.2s;
+        }
+
+        .field input::placeholder { color: rgba(228, 218, 218, 0.2); }
+
+        .field input:focus {
+            border-color: rgba(250, 236, 214, 0.3);
+            background: rgba(228, 218, 218, 0.08);
+        }
+
+        /* ── ERROR GLOBAL ── */
+        .global-error {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 10px 14px;
+            background: rgba(255, 107, 107, 0.07);
+            border: 1px solid rgba(255, 107, 107, 0.2);
+            border-radius: 8px;
+            margin-bottom: 1rem;
+        }
+
+        .global-error span {
+            font-size: 0.78rem;
+            color: #ff6b6b;
+        }
+
+        /* ── SUBMIT ── */
+        .btn-submit {
+            width: 100%;
+            padding: 0.9rem;
+            background: #FAECD6;
+            color: #1C101A;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.88rem;
+            font-weight: 600;
+            font-family: inherit;
+            letter-spacing: 0.04em;
+            cursor: pointer;
+            margin-top: 0.4rem;
+            transition: opacity 0.15s, transform 0.1s;
+        }
+
+        .btn-submit:hover    { opacity: 0.88; }
+        .btn-submit:active   { transform: scale(0.98); }
+        .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* ── FORM FOOTER ── */
+        .form-footer {
+            margin-top: 1.4rem;
+            text-align: center;
+            position: relative;
+            z-index: 1;
+        }
+
+        .form-footer p {
+            font-size: 0.75rem;
+            color: #E4DADA;
+            opacity: 0.3;
+        }
+
+        .form-footer a {
+            color: #FAECD6;
+            text-decoration: none;
+            font-weight: 500;
+            margin-left: 4px;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .form-footer a:hover { opacity: 1; }
+
+        /* ── ERROR INLINE ── */
+        .error {
+            display: block;
+            font-size: 0.72rem;
+            color: #ff6b6b;
+            margin-top: 0.3rem;
+        }
+
+        /* ── RESPONSIVE ── */
+        @media (max-width: 860px) {
+            .wrapper {
+                grid-template-columns: 1fr;
+                min-height: 100vh;
+            }
+
+            .left {
+                padding: 2.5rem 2rem;
+                gap: 2rem;
+                min-height: 50vh;
+            }
+
+            .hero-title { font-size: 2.2rem; }
+
+            .right { padding: 2.5rem 2rem; }
+        }
+    </style>
+</head>
+<body>
+    <div class="wrapper">
+        <!-- LEFT SIDE -->
+        <div class="left">
+            <div class="bg-canvas">
+                <svg class="circuit" viewBox="0 0 1000 1000">
+                    <defs>
+                        <pattern id="circuit-pattern" x="0" y="0" width="100" height="100" patternUnits="userSpaceOnUse">
+                            <rect x="10" y="10" width="80" height="80" fill="none" stroke="rgba(250, 236, 214, 0.1)" stroke-width="0.5"/>
+                            <circle cx="50" cy="50" r="3" fill="rgba(250, 236, 214, 0.1)"/>
+                        </pattern>
+                    </defs>
+                    <rect width="1000" height="1000" fill="url(#circuit-pattern)"/>
+                </svg>
+
+                <div class="orb orb-1"></div>
+                <div class="orb orb-2"></div>
+                <div class="orb orb-3"></div>
+
+                <div class="speed-lines" id="speedLines"></div>
+                <div class="particles" id="particles"></div>
+            </div>
+
+            <div class="left-center">
+                <div class="logo-area">
+                    <div class="logo-icon">
+                        <img src="{% static 'core/images/image.png' %}" alt="Logo" style="width: 100%; height: 100%; object-fit: contain;">
+                    </div>
+                    <div class="logo-text">AutoFinance</div>
+                </div>
+
+                <div class="hero-content">
+                    <div class="eyebrow">Únete hoy</div>
+                    <h1 class="hero-title">Empieza tu<br><strong>camino, gratis</strong></h1>
+                    <p class="hero-sub">Crea tu cuenta en segundos y accede a las mejores tasas del mercado.</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- RIGHT SIDE -->
+        <div class="right">
+            <div class="form-header">
+                <h2>Crear cuenta</h2>
+                <p>Completa los datos para comenzar</p>
+            </div>
+
+            <div class="global-error" id="globalError" style="display: none;">
+                <span id="errorMessage"></span>
+            </div>
+
+            <form id="registerForm">
+                {% csrf_token %}
+
+                <div class="field">
+                    <label for="email">Correo electrónico</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-envelope"></i></span>
+                        <input
+                            type="email"
+                            id="email"
+                            name="email"
+                            placeholder="tu@email.com"
+                            required
+                        >
+                    </div>
+                    <span class="error" id="emailError"></span>
+                </div>
+
+                <div class="field">
+                    <label for="password">Contraseña</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input
+                            type="password"
+                            id="password"
+                            name="password"
+                            placeholder="••••••••"
+                            required
+                        >
+                        <button type="button" class="toggle-password" id="togglePassword" title="Mostrar/ocultar contraseña"><i class="fas fa-eye"></i></button>
+                    </div>
+                    <span class="error" id="passwordError"></span>
+                </div>
+
+                <div class="field">
+                    <label for="confirmPassword">Confirmar contraseña</label>
+                    <div class="input-wrap">
+                        <span class="input-icon"><i class="fas fa-lock"></i></span>
+                        <input
+                            type="password"
+                            id="confirmPassword"
+                            name="confirmPassword"
+                            placeholder="••••••••"
+                            required
+                        >
+                        <button type="button" class="toggle-password" id="toggleConfirmPassword" title="Mostrar/ocultar contraseña"><i class="fas fa-eye"></i></button>
+                    </div>
+                    <span class="error" id="confirmPasswordError"></span>
+                </div>
+
+                <button type="submit" class="btn-submit" id="submitBtn">
+                    Crear mi cuenta
+                </button>
+            </form>
+
+            <div class="form-footer">
+                <p>¿Ya tienes cuenta? <a href="/login/">Inicia sesión</a></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ── SPEED LINES ──
+        function createSpeedLines() {
+            const container = document.getElementById('speedLines');
+            if (!container) return;
+
+            for (let i = 0; i < 15; i++) {
+                const line = document.createElement('div');
+                line.className = 'sl';
+                const top = Math.random() * 100;
+                const duration = 2 + Math.random() * 2;
+                const delay = Math.random() * 5;
+
+                line.style.top = top + '%';
+                line.style.animation = `slideRight ${duration}s linear ${delay}s infinite`;
+                container.appendChild(line);
+            }
+        }
+
+        // ── PARTICLES ──
+        function createParticles() {
+            const container = document.getElementById('particles');
+            if (!container) return;
+
+            for (let i = 0; i < 20; i++) {
+                const dot = document.createElement('div');
+                dot.className = 'dot';
+                const left = Math.random() * 100;
+                const size = 2 + Math.random() * 3;
+                const duration = 4 + Math.random() * 3;
+                const delay = Math.random() * 3;
+
+                dot.style.left = left + '%';
+                dot.style.bottom = '-10px';
+                dot.style.width = size + 'px';
+                dot.style.height = size + 'px';
+                dot.style.animation = `floatUp ${duration}s linear ${delay}s infinite`;
+                container.appendChild(dot);
+            }
+        }
+
+        // ── FORM ELEMENTS ──
+        const form = document.getElementById('registerForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const confirmPasswordInput = document.getElementById('confirmPassword');
+        const togglePasswordBtn = document.getElementById('togglePassword');
+        const toggleConfirmPasswordBtn = document.getElementById('toggleConfirmPassword');
+        const submitBtn = document.getElementById('submitBtn');
+        const globalError = document.getElementById('globalError');
+        const errorMessage = document.getElementById('errorMessage');
+        const emailError = document.getElementById('emailError');
+        const passwordError = document.getElementById('passwordError');
+        const confirmPasswordError = document.getElementById('confirmPasswordError');
+
+        // ── TOGGLE PASSWORD VISIBILITY ──
+        togglePasswordBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = passwordInput.type === 'password';
+            passwordInput.type = isPassword ? 'text' : 'password';
+            const icon = togglePasswordBtn.querySelector('i');
+            if (isPassword) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        toggleConfirmPasswordBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const isPassword = confirmPasswordInput.type === 'password';
+            confirmPasswordInput.type = isPassword ? 'text' : 'password';
+            const icon = toggleConfirmPasswordBtn.querySelector('i');
+            if (isPassword) {
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        });
+
+        // ── VALIDATION ──
+        function isValidEmail(email) {
+            return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+        }
+
+        function isValidPassword(password) {
+            return password.length >= 6;
+        }
+
+        function validateForm() {
+            emailError.textContent = '';
+            passwordError.textContent = '';
+            confirmPasswordError.textContent = '';
+            globalError.style.display = 'none';
+
+            let isValid = true;
+
+            if (!emailInput.value) {
+                emailError.textContent = 'Correo requerido';
+                isValid = false;
+            } else if (!isValidEmail(emailInput.value)) {
+                emailError.textContent = 'Correo inválido';
+                isValid = false;
+            }
+
+            if (!passwordInput.value) {
+                passwordError.textContent = 'Contraseña requerida';
+                isValid = false;
+            } else if (!isValidPassword(passwordInput.value)) {
+                passwordError.textContent = 'Mínimo 6 caracteres';
+                isValid = false;
+            }
+
+            if (passwordInput.value !== confirmPasswordInput.value) {
+                confirmPasswordError.textContent = 'Las contraseñas no coinciden';
+                isValid = false;
+            }
+
+            return isValid;
+        }
+
+        // ── FORM SUBMISSION ──
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            if (!validateForm()) return;
+
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Registrando...';
+
+            try {
+                const response = await fetch('/api/register/', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRFToken': document.querySelector('[name=csrfmiddlewaretoken]').value
+                    },
+                    body: JSON.stringify({
+                        email: emailInput.value,
+                        password: passwordInput.value,
+                        password_confirm: confirmPasswordInput.value
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Registro exitoso - redirigir a login
+                    alert('Cuenta creada exitosamente. Por favor, inicia sesión.');
+                    window.location.href = '/login/';
+                } else {
+                    // Mostrar errores
+                    if (data.email) {
+                        emailError.textContent = Array.isArray(data.email) ? data.email[0] : data.email;
+                    }
+                    if (data.password) {
+                        passwordError.textContent = Array.isArray(data.password) ? data.password[0] : data.password;
+                    }
+                    if (data.non_field_errors) {
+                        errorMessage.textContent = Array.isArray(data.non_field_errors) ? data.non_field_errors[0] : data.non_field_errors;
+                        globalError.style.display = 'flex';
+                    }
+
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Crear mi cuenta';
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                errorMessage.textContent = 'Error al registrar. Intenta de nuevo.';
+                globalError.style.display = 'flex';
+                submitBtn.disabled = false;
+                submitBtn.textContent = 'Crear mi cuenta';
+            }
+        });
+
+        // Initialize animations
+        document.addEventListener('DOMContentLoaded', () => {
+            createSpeedLines();
+            createParticles();
+        });
+    </script>
+</body>
+</html>

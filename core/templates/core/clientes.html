@@ -68,7 +68,7 @@
                     </td>
                     <td class="py-3 text-muted">{{ prestamo.fecha_inicio|date:"d/m/Y" }}</td>
                     <td class="py-3">
-                        <a href="{% url 'detalle_prestamo' prestamo.id %}"
+                        <a href="{% url 'loan' prestamo.id %}"
                            class="btn btn-sm fw-bold px-3 rounded-pill text-white"
                            style="background-color: #4a1829;">
                             Ver préstamo

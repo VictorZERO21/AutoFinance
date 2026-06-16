@@ -105,7 +105,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         <div class="col-md-8">
             <div class="card border-2 rounded-4 shadow-sm bg-white p-3"
                  style="border-color: #800020 !important;">
-                <img src="{% if vehiculo.imagen_url %}{% static vehiculo.imagen_url %}{% else %}{% static 'imagenes/carro.png' %}{% endif %}"
+                <img src="{% if vehiculo.imagen_url %}{% if 'http' in vehiculo.imagen_url %}{{ vehiculo.imagen_url }}{% else %}{% static vehiculo.imagen_url %}{% endif %}{% else %}{% static 'imagenes/carro.png' %}{% endif %}"
                      class="w-100"
                      style="object-fit: contain; max-height: 250px; display: block;"
                      alt="{{ vehiculo }}">

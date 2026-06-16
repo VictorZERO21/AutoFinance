@@ -1,57 +1,63 @@
 from django.db import migrations
 
-# URLs de Cloudinary para imágenes de vehículos reales
-# Usando Cloudinary public URLs que funcionan sin autenticación
+# URLs de imágenes de vehículos desde Cloudinary
+# Imágenes reales subidas por el usuario
 IMAGENES_CLOUDINARY = [
     {
         "marca": "BMW",
         "modelo": "320i",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/bmw_320i_luxury_sedan_qfx7nk.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578536/2024-BMW-3-Series-Gray_lzelxf.webp"
     },
     {
         "marca": "Chevrolet",
         "modelo": "Malibu",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/chevrolet_malibu_mid_range_sedan_t2k3lm.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578700/2024.malibu.profile_u3279g.webp"
     },
     {
         "marca": "Ford",
         "modelo": "Fusion",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/ford_fusion_hybrid_sedan_x5n8qp.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578786/Fusion_1__ev1zup.png"
     },
     {
         "marca": "Honda",
         "modelo": "Civic",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/honda_civic_sport_sedan_y9j2ml.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578831/2024-Honda-Civic-Si-Red_zaryif.webp"
     },
     {
         "marca": "Nissan",
         "modelo": "Altima",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/nissan_altima_executive_sedan_k4r6np.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578919/model1_mp2uwd.png"
     },
     {
         "marca": "Toyota",
         "modelo": "Corolla",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/toyota_corolla_economy_sedan_m8v3qs.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578975/mlp-img-top-2024-corolla_a4x4mh.avif"
     },
     {
         "marca": "Volkswagen",
         "modelo": "Passat",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/volkswagen_passat_premium_sedan_w1p7rt.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579047/volkswagen-passat-2024-1021__d8a9f2157418048c_xl_hlwcxi.webp"
     },
     {
         "marca": "Hyundai",
         "modelo": "Elantra",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/hyundai_elantra_compact_sedan_z2u4vw.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579120/hyundai_20elantrasesd6t_angularfront_black_xwpke0.webp"
+    },
+    {
+        "marca": "Hyundai",
+        "modelo": "Elantra",
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579165/2024_24_e6eaa1.png",
+        "anio": 2024
     },
     {
         "marca": "Kia",
         "modelo": "Sportage",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/kia_sportage_suv_h6x8yz.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579216/2024_24_1_wbxp05.png"
     },
     {
         "marca": "Mazda",
         "modelo": "CX-5",
-        "imagen_url": "https://res.cloudinary.com/dtp63hhxr/image/upload/v1718528400/autofinance/mazda_cx5_compact_suv_j3n5ab.jpg"
+        "imagen_url": "https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579275/mlp-img-top-2024-cx5_rk7nko.avif"
     },
 ]
 
@@ -60,10 +66,29 @@ def agregar_imagenes_cloudinary(apps, schema_editor):
     """Agrega imágenes desde Cloudinary a todos los vehículos"""
     Vehiculo = apps.get_model("core", "Vehiculo")
     for item in IMAGENES_CLOUDINARY:
-        Vehiculo.objects.filter(
-            marca=item["marca"],
-            modelo=item["modelo"]
-        ).update(imagen_url=item["imagen_url"])
+        # Caso especial para Hyundai Elantra 2024
+        if item.get("anio"):
+            Vehiculo.objects.filter(
+                marca=item["marca"],
+                modelo=item["modelo"],
+                anio=item["anio"]
+            ).update(imagen_url=item["imagen_url"])
+        else:
+            # Para otros vehículos, buscar solo por marca y modelo
+            # y actualizar solo el primero encontrado (para evitar actualizar ambos Elantra)
+            vehiculo = Vehiculo.objects.filter(
+                marca=item["marca"],
+                modelo=item["modelo"]
+            ).first()
+            if vehiculo:
+                # Si es Hyundai Elantra sin año especificado, actualizar solo si es 2023
+                if item["marca"] == "Hyundai" and item["modelo"] == "Elantra":
+                    if vehiculo.anio == 2023:
+                        vehiculo.imagen_url = item["imagen_url"]
+                        vehiculo.save()
+                else:
+                    vehiculo.imagen_url = item["imagen_url"]
+                    vehiculo.save()
 
 
 def remover_imagenes(apps, schema_editor):

@@ -7,9 +7,27 @@
     <title>AutoFinance - Login</title>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
     <style>
+        :root {
+            --bg-deep: #0b0b0f;
+            --bg-panel: #170f2b;
+            --panel-bg: radial-gradient(circle at 10% 15%, #140f2b 0%, var(--bg-deep) 55%);
+            --text-main: #f6f7fb;
+            --text-muted: #c3c8d4;
+            --accent: #e08793;
+            --accent-strong: #ff7070;
+            --highlight-left: #f5e7cb;
+            --highlight-right: #ffb5b5;
+            --danger: #ff6b6b;
+        }
+
         /* ── RESET ── */
         *, *::before, *::after { box-sizing: border-box; }
-        html, body { margin: 0; padding: 0; }
+        html, body {
+            margin: 0;
+            padding: 0;
+            min-height: 100%;
+            background: var(--bg-deep);
+        }
 
         /* ── LAYOUT ── */
         .wrapper {
@@ -18,13 +36,15 @@
             min-height: 100vh;
             font-family: 'Inter', system-ui, -apple-system, sans-serif;
             overflow: hidden;
+            width: 100%;
+            background: var(--bg-deep);
         }
 
         /* ─────────────────────────────────────────
            LEFT
            ───────────────────────────────────────── */
         .left {
-            background: #0e0810;
+            background: var(--panel-bg);
             position: relative;
             overflow: hidden;
             padding: 3rem 3.5rem;
@@ -61,14 +81,14 @@
         .orb-1 {
             width: 620px; height: 620px;
             top: -260px; left: -160px;
-            background: radial-gradient(circle, rgba(160, 60, 120, 0.55) 0%, rgba(100, 30, 80, 0.2) 45%, transparent 68%);
+            background: radial-gradient(circle, rgba(160, 60, 77, 0.55) 0%, rgba(100, 30, 42, 0.2) 45%, transparent 68%);
             animation: orbFloat1 7s ease-in-out infinite;
         }
 
         .orb-2 {
             width: 420px; height: 420px;
             bottom: -160px; right: -90px;
-            background: radial-gradient(circle, rgba(90, 35, 80, 0.5) 0%, rgba(60, 20, 55, 0.15) 50%, transparent 68%);
+            background: radial-gradient(circle, rgba(90, 35, 38, 0.5) 0%, rgba(60, 20, 35, 0.15) 50%, transparent 68%);
             animation: orbFloat2 10s ease-in-out infinite;
         }
 
@@ -76,7 +96,7 @@
             width: 280px; height: 280px;
             top: 48%; left: 52%;
             transform: translate(-50%, -50%);
-            background: radial-gradient(circle, rgba(250, 236, 214, 0.12) 0%, transparent 65%);
+            background: radial-gradient(circle, rgba(255, 245, 230, 0.12) 0%, transparent 65%);
             animation: orbPulse 5s ease-in-out infinite;
         }
 
@@ -124,7 +144,7 @@
         .dot {
             position: absolute;
             border-radius: 50%;
-            background: rgba(250, 236, 214, 0.55);
+            background: rgba(255, 242, 220, 0.55);
             animation: floatUp linear infinite;
         }
 
@@ -145,8 +165,8 @@
         }
 
         .logo-icon {
-            width: 34px;
-            height: 34px;
+            width: clamp(32px, 1.4vw + 24px, 48px);
+            height: clamp(32px, 1.4vw + 24px, 48px);
             border-radius: 8px;
             background: #FAECD6;
             display: flex;
@@ -160,9 +180,9 @@
         }
 
         .logo-text {
-            font-size: 13px;
+            font-size: clamp(0.72rem, 0.35vw + 0.58rem, 0.95rem);
             font-weight: 600;
-            color: #E4DADA;
+            color: var(--text-main);
             letter-spacing: 0.1em;
             text-transform: uppercase;
         }
@@ -174,7 +194,7 @@
         }
 
         .eyebrow {
-            font-size: 10px;
+            font-size: clamp(0.62rem, 0.22vw + 0.54rem, 0.82rem);
             font-weight: 500;
             color: #FAECD6;
             opacity: 0.4;
@@ -184,23 +204,23 @@
         }
 
         .hero-title {
-            font-size: 3rem;
+            font-size: clamp(2rem, 1.8vw + 1.2rem, 3.6rem);
             font-weight: 300;
             line-height: 1.15;
-            color: #E4DADA;
+            color: var(--text-main);
             letter-spacing: -0.025em;
             margin: 0 0 1rem 0;
         }
 
         .hero-title strong {
             font-weight: 600;
-            color: #FAECD6;
+            color: var(--highlight-left);
         }
 
         .hero-sub {
-            font-size: 0.82rem;
-            color: #E4DADA;
-            opacity: 0.38;
+            font-size: clamp(0.88rem, 0.35vw + 0.72rem, 1.15rem);
+            color: var(--text-muted);
+            opacity: 0.9;
             line-height: 1.7;
             max-width: 260px;
         }
@@ -215,6 +235,7 @@
             position: relative;
             display: inline-block;
             width: 100%;
+            max-width: clamp(320px, 52vw, 980px);
         }
 
         .car-wrap::after {
@@ -234,7 +255,7 @@
 
         .car {
             width: 100%;
-            max-width: 600px;
+            max-width: none;
             display: block;
             filter: drop-shadow(0 28px 50px rgba(0, 0, 0, 0.95))
                     drop-shadow(-10px 0 24px rgba(250, 236, 214, 0.06))
@@ -262,26 +283,31 @@
            RIGHT
            ───────────────────────────────────────── */
         .right {
-            background: #1a0f18;
+            background: #0b0b0f;
             padding: 3rem 3rem;
             display: flex;
             flex-direction: column;
             justify-content: center;
             position: relative;
             overflow: hidden;
+            font-size: 1rem;
+        }
+
+        .right > * {
+            width: 100%;
+            max-width: min(760px, 92vw);
+            margin-left: auto;
+            margin-right: auto;
         }
 
         .right::before {
-            content: '';
-            position: absolute;
-            top: -80px;
-            right: -80px;
-            width: 280px;
-            height: 280px;
-            border-radius: 50%;
-            background: radial-gradient(circle, rgba(250, 236, 214, 0.04) 0%, transparent 70%);
-            pointer-events: none;
-            z-index: 0;
+            content: none;
+            display: none;
+        }
+
+        .right::after {
+            content: none;
+            display: none;
         }
 
         /* ── FORM HEADER ── */
@@ -292,17 +318,17 @@
         }
 
         .form-header h2 {
-            font-size: 1.5rem;
+            font-size: clamp(1.65rem, 0.95vw + 1.15rem, 2.6rem);
             font-weight: 500;
-            color: #E4DADA;
+            color: var(--text-main);
             letter-spacing: -0.015em;
             margin: 0 0 0.3rem 0;
         }
 
         .form-header p {
-            font-size: 0.78rem;
-            color: #E4DADA;
-            opacity: 0.3;
+            font-size: clamp(0.95rem, 0.38vw + 0.8rem, 1.2rem);
+            color: var(--text-muted);
+            opacity: 0.9;
         }
 
         /* ── FIELDS ── */
@@ -315,10 +341,10 @@
 
         .field > label {
             display: block;
-            font-size: 10px;
+            font-size: clamp(0.7rem, 0.2vw + 0.62rem, 0.85rem);
             font-weight: 500;
-            color: #E4DADA;
-            opacity: 0.45;
+            color: var(--text-main);
+            opacity: 0.92;
             letter-spacing: 0.14em;
             text-transform: uppercase;
             margin-bottom: 0.5rem;
@@ -332,18 +358,18 @@
         }
 
         .pw-row label {
-            font-size: 10px;
+            font-size: clamp(0.7rem, 0.2vw + 0.62rem, 0.85rem);
             font-weight: 500;
-            color: #E4DADA;
-            opacity: 0.45;
+            color: var(--text-main);
+            opacity: 0.92;
             letter-spacing: 0.14em;
             text-transform: uppercase;
         }
 
         .forgot-link {
-            font-size: 10px;
-            color: #FAECD6;
-            opacity: 0.4;
+            font-size: clamp(0.7rem, 0.2vw + 0.62rem, 0.85rem);
+            color: var(--highlight-right);
+            opacity: 0.9;
             text-decoration: none;
             letter-spacing: 0.04em;
             transition: opacity 0.2s;
@@ -372,8 +398,8 @@
             transform: translateY(-50%);
             background: none;
             border: none;
-            color: #E4DADA;
-            opacity: 0.35;
+            color: var(--text-main);
+            opacity: 0.7;
             cursor: pointer;
             font-size: 13px;
             padding: 4px;
@@ -387,33 +413,33 @@
 
         .field input {
             width: 100%;
-            padding: 0.78rem 1rem 0.78rem 2.75rem;
-            background: rgba(228, 218, 218, 0.05);
-            border: 1px solid rgba(228, 218, 218, 0.1);
+            padding: clamp(0.88rem, 0.32vw + 0.76rem, 1.1rem) 1rem clamp(0.88rem, 0.32vw + 0.76rem, 1.1rem) 2.75rem;
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.3);
             border-radius: 10px;
-            color: #E4DADA;
-            font-size: 0.85rem;
+            color: var(--text-main);
+            font-size: clamp(0.95rem, 0.3vw + 0.84rem, 1.14rem);
             font-family: inherit;
             outline: none;
             transition: border-color 0.2s, background 0.2s;
         }
 
-        .field input::placeholder { color: rgba(228, 218, 218, 0.2); }
+        .field input::placeholder { color: rgba(246, 247, 251, 0.72); }
 
         .field input:focus {
-            border-color: rgba(250, 236, 214, 0.3);
-            background: rgba(228, 218, 218, 0.08);
+            border-color: var(--accent);
+            background: rgba(255, 255, 255, 0.14);
         }
 
         /* ── SUBMIT ── */
         .btn-submit {
             width: 100%;
-            padding: 0.9rem;
-            background: #FAECD6;
-            color: #1C101A;
+            padding: clamp(0.92rem, 0.32vw + 0.8rem, 1.16rem);
+            background: var(--accent);
+            color: #031423;
             border: none;
             border-radius: 10px;
-            font-size: 0.88rem;
+            font-size: clamp(0.98rem, 0.28vw + 0.88rem, 1.16rem);
             font-weight: 600;
             font-family: inherit;
             letter-spacing: 0.04em;
@@ -424,7 +450,7 @@
             overflow: hidden;
         }
 
-        .btn-submit:hover  { opacity: 0.88; }
+        .btn-submit:hover  { background: var(--accent-strong); }
         .btn-submit:active { transform: scale(0.98); }
         .btn-submit:disabled { opacity: 0.5; cursor: not-allowed; }
 
@@ -437,17 +463,17 @@
         }
 
         .form-footer p {
-            font-size: 0.75rem;
-            color: #E4DADA;
-            opacity: 0.3;
+            font-size: clamp(0.86rem, 0.26vw + 0.76rem, 1.02rem);
+            color: var(--text-muted);
+            opacity: 0.92;
         }
 
         .form-footer a {
-            color: #FAECD6;
+            color: var(--highlight-right);
             text-decoration: none;
             font-weight: 500;
             margin-left: 4px;
-            opacity: 0.7;
+            opacity: 1;
             transition: opacity 0.2s;
         }
 
@@ -477,23 +503,88 @@
         }
 
         /* ── RESPONSIVE ── */
-        @media (max-width: 860px) {
+        @media (max-width: 1200px) {
             .wrapper {
                 grid-template-columns: 1fr;
                 min-height: 100vh;
             }
 
             .left {
-                padding: 2.5rem 2rem;
+                padding: 2.4rem 1.8rem;
                 gap: 2rem;
-                min-height: 50vh;
+                min-height: 46vh;
             }
 
-            .hero-title { font-size: 2.2rem; }
+            .hero-sub { max-width: 40ch; }
 
-            .car { width: 80%; max-width: 320px; }
+            .car-wrap { max-width: min(80vw, 620px); }
 
-            .right { padding: 2.5rem 2rem; }
+            .right { padding: 2.2rem 1.8rem; }
+
+            .right > * { max-width: 42rem; }
+        }
+
+        @media (max-width: 700px) {
+            .left,
+            .right {
+                padding: 1.6rem 1rem;
+            }
+
+            .left {
+                min-height: 42vh;
+                gap: 1.4rem;
+            }
+
+            .logo-area { gap: 8px; }
+
+            .hero-sub { max-width: 100%; }
+
+            .car-wrap { max-width: min(86vw, 460px); }
+
+            .pw-row {
+                flex-wrap: wrap;
+                gap: 0.45rem;
+                align-items: flex-start;
+            }
+
+            .right > * { max-width: none; }
+        }
+
+        @media (min-width: 1280px) {
+            .wrapper {
+                grid-template-columns: 1.1fr 0.9fr;
+            }
+
+            .left,
+            .right {
+                padding: 3.8rem 4.2rem;
+            }
+        }
+
+        @media (min-width: 1680px) {
+            .right > * { max-width: 820px; }
+            .right { padding: 4.6rem 6rem; }
+            .car-wrap { max-width: min(60vw, 1120px); }
+        }
+
+        @media (min-width: 2200px) {
+            html { font-size: 18px; }
+
+            .wrapper {
+                grid-template-columns: 1.15fr 0.85fr;
+            }
+
+            .left,
+            .right {
+                padding: 5rem 7rem;
+            }
+
+            .right > * { max-width: 960px; }
+            .car-wrap { max-width: min(62vw, 1400px); }
+        }
+
+        @media (min-width: 3000px) {
+            html { font-size: 20px; }
         }
     </style>
 </head>

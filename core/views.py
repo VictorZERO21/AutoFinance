@@ -5,6 +5,7 @@ from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
+from django.db.models import Q
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -386,8 +387,79 @@ def detalle_prestamo(request, prestamo_id):
     })
 
 
+def _score_riesgo_cumplimiento(prestamo):
+    """Calcula un score simple de riesgo de cumplimiento en escala 0-100."""
+    cuota_inicial_pct = float(prestamo.cuota_inicial_pct or 0)
+    valor_tasa = float(prestamo.valor_tasa or 0)
+    plazo_meses = int(prestamo.plazo_meses or 12)
+    meses_gracia = int(prestamo.meses_gracia or 0)
+    cuota_balon_pct = float(prestamo.cuota_balon_pct or 0)
+
+    riesgo_plazo = min(max((plazo_meses - 12) / 60, 0), 1) * 25
+    riesgo_tasa = min(max(valor_tasa / 30, 0), 1) * 25
+    riesgo_inicial = min(max((40 - cuota_inicial_pct) / 40, 0), 1) * 20
+    riesgo_gracia = min(max(meses_gracia / 12, 0), 1) * 15
+    riesgo_balon = min(max(cuota_balon_pct / 30, 0), 1) * 15
+
+    score = riesgo_plazo + riesgo_tasa + riesgo_inicial + riesgo_gracia + riesgo_balon
+    return round(min(score, 100), 1)
+
+
 @login_required(login_url='login')
 def lista_clientes(request):
-    """Muestra la tabla de todos los préstamos"""
-    prestamos = Prestamo.objects.all().order_by('-fecha_inicio')
-    return render(request, 'core/clientes.html', {'prestamos': prestamos})
+    """Muestra la tabla de préstamos y un resumen de riesgo de cumplimiento."""
+    busqueda = request.GET.get('q', '').strip()
+    estado = request.GET.get('estado', '').strip()
+    fecha_desde = request.GET.get('fecha_desde', '').strip()
+    fecha_hasta = request.GET.get('fecha_hasta', '').strip()
+
+    prestamos_qs = Prestamo.objects.select_related('usuario', 'vehiculo').all()
+
+    if busqueda:
+        prestamos_qs = prestamos_qs.filter(
+            Q(usuario__nombre_completo__icontains=busqueda)
+            | Q(usuario__dni__icontains=busqueda)
+            | Q(usuario__email__icontains=busqueda)
+            | Q(vehiculo__marca__icontains=busqueda)
+            | Q(vehiculo__modelo__icontains=busqueda)
+        )
+
+    if estado and estado != 'TODOS':
+        prestamos_qs = prestamos_qs.filter(estado=estado)
+
+    if fecha_desde:
+        prestamos_qs = prestamos_qs.filter(fecha_inicio__gte=fecha_desde)
+
+    if fecha_hasta:
+        prestamos_qs = prestamos_qs.filter(fecha_inicio__lte=fecha_hasta)
+
+    prestamos = list(prestamos_qs.order_by('-fecha_inicio'))
+
+    estadisticas_riesgo = []
+    for prestamo in prestamos:
+        score = _score_riesgo_cumplimiento(prestamo)
+        estadisticas_riesgo.append({
+            'prestamo': prestamo,
+            'score': score,
+        })
+
+    estadisticas_riesgo.sort(key=lambda item: item['score'], reverse=True)
+    top_riesgo = estadisticas_riesgo[0] if estadisticas_riesgo else None
+    promedio_riesgo = round(
+        sum(item['score'] for item in estadisticas_riesgo) / len(estadisticas_riesgo), 1
+    ) if estadisticas_riesgo else 0
+
+    return render(request, 'core/clientes.html', {
+        'prestamos': prestamos,
+        'top_riesgo': top_riesgo,
+        'ranking_riesgo': estadisticas_riesgo[:5],
+        'promedio_riesgo': promedio_riesgo,
+        'total_clientes_riesgo': len(estadisticas_riesgo),
+        'filtros': {
+            'q': busqueda,
+            'estado': estado or 'TODOS',
+            'fecha_desde': fecha_desde,
+            'fecha_hasta': fecha_hasta,
+        },
+        'estados_prestamo': Prestamo.Estado.choices,
+    })

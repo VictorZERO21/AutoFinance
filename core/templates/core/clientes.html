@@ -8,24 +8,104 @@
     <p class="text-muted mb-0">Consulta y gestiona los préstamos activos de los clientes</p>
 </div>
 
-<!-- Filtros -->
-<div class="card border rounded-4 shadow-sm mb-4" style="background-color: #faf8f8; border-color: #d8c3c9 !important;">
-    <div class="card-body row align-items-end g-3">
-        <div class="col-md-5">
-            <input type="text" class="form-control" placeholder="Buscar por nombre, DNI o email">
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small text-muted fw-bold">Estado del préstamo</label>
-            <select class="form-select">
-                <option>Todos</option>
-                <option>Activo</option>
-            </select>
-        </div>
-        <div class="col-md-3">
-            <label class="form-label small text-muted fw-bold">Fecha</label>
-            <input type="text" class="form-control" placeholder="Rango de fechas">
+<div class="row g-4 mb-4">
+    <div class="col-lg-7">
+        <div class="card border-0 shadow-sm rounded-4 h-100" style="background: linear-gradient(135deg, #101728 0%, #19233d 100%);">
+            <div class="card-body p-4 p-xl-5 text-white">
+                <p class="text-uppercase fw-bold mb-2" style="letter-spacing: 1.6px; font-size: .78rem; color: #cfb5ff;">Riesgo de cumplimiento</p>
+                {% if top_riesgo %}
+                <div class="d-flex flex-column flex-md-row justify-content-between gap-4 align-items-start">
+                    <div>
+                        <h2 class="fw-bold mb-2">{{ top_riesgo.prestamo.usuario.nombre_completo }}</h2>
+                        <p class="mb-2" style="color: rgba(255,255,255,.78);">Cliente con el score de riesgo de cumplimiento más alto.</p>
+                        <div class="small" style="color: rgba(255,255,255,.7);">
+                            DNI: {{ top_riesgo.prestamo.usuario.dni }}<br>
+                            Vehículo: {{ top_riesgo.prestamo.vehiculo.marca }} {{ top_riesgo.prestamo.vehiculo.modelo }}<br>
+                            Plazo: {{ top_riesgo.prestamo.plazo_meses }} meses
+                        </div>
+                    </div>
+                    <div class="text-md-end">
+                        <div class="fw-bold" style="font-size: 3.4rem; line-height: 1; color: #f5e7cb;">{{ top_riesgo.score }}</div>
+                        <div class="small text-uppercase" style="letter-spacing: 1.5px; color: rgba(255,255,255,.68);">Score / 100</div>
+                    </div>
+                </div>
+                {% else %}
+                <h2 class="fw-bold mb-2">Sin datos suficientes</h2>
+                <p class="mb-0" style="color: rgba(255,255,255,.78);">Aún no hay préstamos para estimar riesgo de cumplimiento.</p>
+                {% endif %}
+            </div>
         </div>
     </div>
+    <div class="col-lg-5">
+        <div class="card border rounded-4 shadow-sm h-100" style="background-color: #faf8f8; border-color: #d8c3c9 !important;">
+            <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start mb-4">
+                    <div>
+                        <p class="fw-bold mb-1 text-uppercase" style="color: #800020; letter-spacing: 1.4px; font-size: .76rem;">Resumen</p>
+                        <h5 class="fw-bold mb-0" style="color: #5a1829;">Ranking de riesgo</h5>
+                    </div>
+                    <span class="badge rounded-pill" style="background-color: #f0dbe2; color: #6d2034;">{{ total_clientes_riesgo }} clientes</span>
+                </div>
+
+                <div class="d-flex justify-content-between mb-3">
+                    <span class="text-muted small">Promedio general</span>
+                    <strong style="color: #5a1829;">{{ promedio_riesgo }}/100</strong>
+                </div>
+
+                {% for item in ranking_riesgo %}
+                <div class="mb-3">
+                    <div class="d-flex justify-content-between align-items-center mb-1 gap-3">
+                        <div class="small fw-semibold text-dark">{{ item.prestamo.usuario.nombre_completo }}</div>
+                        <div class="small fw-bold" style="color: #5a1829;">{{ item.score }}</div>
+                    </div>
+                    <div class="progress" style="height: 10px; background-color: #eadfe3;">
+                        <div class="progress-bar rounded-pill" role="progressbar"
+                             style="width: {{ item.score }}%; background: linear-gradient(90deg, #a855f7 0%, #ff708f 100%);"
+                             aria-valuenow="{{ item.score }}" aria-valuemin="0" aria-valuemax="100"></div>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-muted mb-0">No hay clientes con préstamos para generar el ranking.</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filtros -->
+<div class="card border rounded-4 shadow-sm mb-4" style="background-color: #faf8f8; border-color: #d8c3c9 !important;">
+    <form method="get" class="card-body row align-items-end g-3">
+        <div class="col-lg-4 col-md-6">
+            <label class="form-label small text-muted fw-bold">Búsqueda</label>
+            <input
+                type="text"
+                name="q"
+                class="form-control"
+                placeholder="Buscar por nombre, DNI o email"
+                value="{{ filtros.q }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small text-muted fw-bold">Estado del préstamo</label>
+            <select name="estado" class="form-select">
+                <option value="TODOS" {% if filtros.estado == 'TODOS' %}selected{% endif %}>Todos</option>
+                {% for value, label in estados_prestamo %}
+                <option value="{{ value }}" {% if filtros.estado == value %}selected{% endif %}>{{ label }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small text-muted fw-bold">Desde</label>
+            <input type="date" name="fecha_desde" class="form-control" value="{{ filtros.fecha_desde }}">
+        </div>
+        <div class="col-lg-2 col-md-6">
+            <label class="form-label small text-muted fw-bold">Hasta</label>
+            <input type="date" name="fecha_hasta" class="form-control" value="{{ filtros.fecha_hasta }}">
+        </div>
+        <div class="col-lg-2 col-md-12 d-flex gap-2">
+            <button type="submit" class="btn fw-bold text-white w-100" style="background-color: #4a1829;">Filtrar</button>
+            <a href="{% url 'clients' %}" class="btn btn-outline-secondary w-100">Limpiar</a>
+        </div>
+    </form>
 </div>
 
 <!-- Tabla de clientes -->
@@ -62,8 +142,8 @@
                     </td>
                     <td class="py-3 fw-bold" style="color: #5a1829;">${{ prestamo.precio_bien }}</td>
                     <td class="py-3">
-                        <span class="badge bg-success text-white px-3 py-1 rounded-pill" style="font-size:.78rem;">
-                            Activo
+                        <span class="badge {% if prestamo.estado == 'ACTIVO' %}bg-success{% else %}bg-secondary{% endif %} text-white px-3 py-1 rounded-pill" style="font-size:.78rem;">
+                            {{ prestamo.get_estado_display }}
                         </span>
                     </td>
                     <td class="py-3 text-muted">{{ prestamo.fecha_inicio|date:"d/m/Y" }}</td>

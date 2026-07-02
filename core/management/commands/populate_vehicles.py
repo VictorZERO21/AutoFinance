@@ -15,7 +15,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'Sedán compacto confiable con excelente eficiencia de combustible',
                 'precio_base': Decimal('22500.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1621007947382-bb3c3994e3fb?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578975/mlp-img-top-2024-corolla_a4x4mh.avif'
             },
             {
                 'marca': 'Honda',
@@ -23,7 +23,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'Sedán deportivo con tecnología avanzada y diseño moderno',
                 'precio_base': Decimal('24000.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578831/2024-Honda-Civic-Si-Red_zaryif.webp'
             },
             {
                 'marca': 'Hyundai',
@@ -31,7 +31,7 @@ class Command(BaseCommand):
                 'anio': 2023,
                 'descripcion': 'Sedán económico con tecnología touchscreen de última generación',
                 'precio_base': Decimal('20500.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1617654112368-307921291f42?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579120/hyundai_20elantrasesd6t_angularfront_black_xwpke0.webp'
             },
             {
                 'marca': 'Volkswagen',
@@ -39,7 +39,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'Sedán premium con interior lujoso y tecnología de punta',
                 'precio_base': Decimal('28000.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1606611013016-969c19d24e38?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579047/volkswagen-passat-2024-1021__d8a9f2157418048c_xl_hlwcxi.webp'
             },
             {
                 'marca': 'Mazda',
@@ -47,7 +47,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'SUV compacta versátil con tracción AWD y manejo deportivo',
                 'precio_base': Decimal('28500.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1609708536965-32abf4b02100?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579275/mlp-img-top-2024-cx5_rk7nko.avif'
             },
             {
                 'marca': 'Nissan',
@@ -55,7 +55,7 @@ class Command(BaseCommand):
                 'anio': 2023,
                 'descripcion': 'Sedán ejecutivo con confort premium y tecnología de seguridad',
                 'precio_base': Decimal('26500.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1552820728-8ac41f1ce891?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578919/model1_mp2uwd.png'
             },
             {
                 'marca': 'Kia',
@@ -63,7 +63,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'SUV deportiva con diseño moderno y eficiencia de combustible',
                 'precio_base': Decimal('27000.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1626701798572-d8bcd8c00cd2?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781579216/2024_24_1_wbxp05.png'
             },
             {
                 'marca': 'Chevrolet',
@@ -71,7 +71,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'Sedán robusto con espacioso interior y tecnología moderna',
                 'precio_base': Decimal('24500.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1609335314336-0cd76b3efe2d?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578700/2024.malibu.profile_u3279g.webp'
             },
             {
                 'marca': 'Ford',
@@ -79,7 +79,7 @@ class Command(BaseCommand):
                 'anio': 2023,
                 'descripcion': 'Sedán híbrido con tecnología de conducción autónoma',
                 'precio_base': Decimal('25000.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1609351537893-87b66e9a5a99?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578786/Fusion_1__ev1zup.png'
             },
             {
                 'marca': 'BMW',
@@ -87,7 +87,7 @@ class Command(BaseCommand):
                 'anio': 2024,
                 'descripcion': 'Sedán de lujo con motor de alto rendimiento y interior premium',
                 'precio_base': Decimal('45000.00'),
-                'imagen_url': 'https://images.unsplash.com/photo-1519641776a10-3fc46ef32a77?w=500&q=80'
+                'imagen_url': 'https://res.cloudinary.com/dshxmkd1v/image/upload/v1781578536/2024-BMW-3-Series-Gray_lzelxf.webp'
             },
         ]
 

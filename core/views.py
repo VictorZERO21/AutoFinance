@@ -1,4 +1,5 @@
 from datetime import date
+import random
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
@@ -15,6 +16,45 @@ from .models import Vehiculo, Prestamo, Usuario
 from .engine import FinancialEngine, guardar_cronograma
 from .forms import SimuladorForm
 from .serializers import LoginSerializer, CustomTokenObtainPairSerializer, UsuarioSerializer, RegisterSerializer
+
+
+NOMBRES_CLIENTE = [
+    "Carlos", "Ana", "Luis", "Mariana", "Jorge", "Sofia", "Ricardo", "Camila",
+    "Miguel", "Valeria", "Diego", "Lucia", "Fernando", "Daniela", "Andres", "Paola",
+]
+
+APELLIDOS_CLIENTE = [
+    "Garcia", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez",
+    "Diaz", "Torres", "Ramirez", "Flores", "Vargas", "Castro", "Rojas", "Mendoza",
+]
+
+
+def crear_cliente_aleatorio() -> Usuario:
+    """Crea un usuario cliente con nombre completo y DNI aleatorios."""
+    nombre = random.choice(NOMBRES_CLIENTE)
+    apellido = random.choice(APELLIDOS_CLIENTE)
+    nombre_completo = f"{nombre} {apellido}"
+
+    # Reintenta ante colisiones de DNI/username para garantizar unicidad.
+    for _ in range(20):
+        dni = f"{random.randint(0, 99999999):08d}"
+        username = f"cliente_{dni}"
+
+        if Usuario.objects.filter(dni=dni).exists():
+            continue
+
+        usuario = Usuario(
+            username=username,
+            email="",
+            nombre_completo=nombre_completo,
+            dni=dni,
+            rol=Usuario.Rol.CLIENTE,
+        )
+        usuario.set_unusable_password()
+        usuario.save()
+        return usuario
+
+    raise RuntimeError("No se pudo generar un cliente aleatorio unico")
 
 
 # ============================================================================
@@ -278,13 +318,10 @@ def simular_prestamo(request, vehiculo_id):
             cronograma, _ = motor.procesar()
 
             # ── Persistencia ──────────────────────────────────────────────
-            vendedor = (
-                Usuario.objects.filter(username="vendedor_demo").first()
-                or Usuario.objects.first()
-            )
+            cliente = crear_cliente_aleatorio()
 
             prestamo = Prestamo.objects.create(
-                usuario=vendedor,
+                usuario=cliente,
                 vehiculo=vehiculo,
                 moneda='USD',
                 precio_bien=precio_bien,

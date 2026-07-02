@@ -8,5 +8,12 @@ ENV/
 __pycache__/
 *.pyc
 
+# Variables de entorno locales
+.env
+
+# Base de datos local
+db.sqlite3
+*.sqlite3
+
 # Configuraciones locales de VS Code
 .vscode/

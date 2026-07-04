@@ -56,41 +56,41 @@ class SimuladorForm(forms.Form):
     )
     cuota_balon_pct = forms.DecimalField(
         label="Cuota Balón (%)",
-        min_value=Decimal("0"),
-        max_value=Decimal("40"),
+        min_value=Decimal("40"),
+        max_value=Decimal("50"),
         decimal_places=2,
-        initial=Decimal("20"),
+        initial=Decimal("50"),
         widget=forms.NumberInput(attrs={
-            "step": "0.01", "min": "0", "max": "40",
+            "step": "0.01", "min": "40", "max": "50",
             "class": "form-control bg-light text-center fw-bold fs-5",
         }),
     )
     valor_tasa = forms.DecimalField(
         label="Tasa de Interés (TEA %)",
-        min_value=Decimal("8"),
-        max_value=Decimal("25"),
+        min_value=Decimal("7.99"),
+        max_value=Decimal("24.99"),
         decimal_places=4,
         initial=Decimal("8.80"),
         widget=forms.NumberInput(attrs={
-            "step": "0.01", "min": "8", "max": "25",
+            "step": "0.01", "min": "7.99", "max": "24.99",
             "class": "form-control bg-light text-center fw-bold fs-5",
         }),
     )
     cok = forms.DecimalField(
         label="COK — Costo de Oportunidad (% anual)",
-        min_value=Decimal("1"),
-        max_value=Decimal("100"),
+        min_value=Decimal("8"),
+        max_value=Decimal("25"),
         decimal_places=4,
         initial=Decimal("15.00"),
         widget=forms.NumberInput(attrs={
-            "step": "0.01", "min": "1", "max": "100",
+            "step": "0.01", "min": "8", "max": "25",
             "class": "form-control bg-light text-center fw-bold fs-5",
         }),
     )
     plazo_meses = forms.IntegerField(
         label="Plazo (meses)",
-        min_value=12,
-        max_value=120,
+        min_value=6,
+        max_value=72,
         initial=18,
     )
 
@@ -108,11 +108,11 @@ class SimuladorForm(forms.Form):
     meses_gracia = forms.IntegerField(
         label="N° de meses de Gracia",
         min_value=0,
-        max_value=4,
+        max_value=6,
         required=False,
         initial=2,
         widget=forms.NumberInput(attrs={
-            "min": "0", "max": "4",
+            "min": "0", "max": "6",
             "class": "form-control bg-light text-center fw-bold fs-5",
         }),
     )
@@ -124,12 +124,12 @@ class SimuladorForm(forms.Form):
     )
     tasa_desgravamen_custom = forms.DecimalField(
         label="Desgravamen personalizado (%)",
-        min_value=Decimal("0.04"),
-        max_value=Decimal("0.07"),
+        min_value=Decimal("0.027"),
+        max_value=Decimal("0.16"),
         decimal_places=4,
         required=False,
         widget=forms.NumberInput(attrs={
-            "step": "0.001", "min": "0.04", "max": "0.07",
+            "step": "0.001", "min": "0.027", "max": "0.16",
             "class": "form-control bg-light text-center fw-bold",
             "placeholder": "ej. 0.055",
         }),
@@ -140,12 +140,12 @@ class SimuladorForm(forms.Form):
     )
     tasa_vehicular_custom = forms.DecimalField(
         label="Seguro del bien personalizado (%)",
-        min_value=Decimal("0.35"),
-        max_value=Decimal("8.5"),
+        min_value=Decimal("0.29"),
+        max_value=Decimal("0.74"),
         decimal_places=4,
         required=False,
         widget=forms.NumberInput(attrs={
-            "step": "0.01", "min": "0.35", "max": "8.5",
+            "step": "0.01", "min": "0.29", "max": "0.74",
             "class": "form-control bg-light text-center fw-bold",
             "placeholder": "ej. 0.40",
         }),
@@ -171,7 +171,7 @@ class SimuladorForm(forms.Form):
                 self.add_error("tipo_gracia", "Seleccione el tipo de gracia.")
             meses = cleaned.get("meses_gracia")
             if meses is None or meses <= 0:
-                self.add_error("meses_gracia", "Ingrese al menos 1 mes de gracia (máx. 4).")
+                self.add_error("meses_gracia", "Ingrese al menos 1 mes de gracia (máx. 6).")
 
         # Seguro desgravamen personalizado
         if cleaned.get("tasa_desgravamen") == "OTRO":
@@ -181,10 +181,10 @@ class SimuladorForm(forms.Form):
                     "tasa_desgravamen_custom",
                     "Ingrese el porcentaje del seguro de desgravamen.",
                 )
-            elif not (Decimal("0.04") <= td <= Decimal("0.07")):
+            elif not (Decimal("0.027") <= td <= Decimal("0.16")):
                 self.add_error(
                     "tasa_desgravamen_custom",
-                    "El desgravamen personalizado debe estar entre 0.04 % y 0.07 %.",
+                    "El desgravamen personalizado debe estar entre 0.027 % y 0.16 %.",
                 )
 
         # Seguro vehicular personalizado
@@ -195,10 +195,10 @@ class SimuladorForm(forms.Form):
                     "tasa_vehicular_custom",
                     "Ingrese el porcentaje del seguro del bien.",
                 )
-            elif not (Decimal("0.35") <= tv <= Decimal("8.5")):
+            elif not (Decimal("0.29") <= tv <= Decimal("0.74")):
                 self.add_error(
                     "tasa_vehicular_custom",
-                    "El seguro del bien personalizado debe estar entre 0.35 % y 8.5 %.",
+                    "El seguro del bien personalizado debe estar entre 0.29 % y 0.74 %.",
                 )
 
         # Fecha de inicio: mínimo hoy, máximo un año a partir de hoy

@@ -20,13 +20,13 @@ from .serializers import LoginSerializer, CustomTokenObtainPairSerializer, Usuar
 
 
 NOMBRES_CLIENTE = [
-    "Carlos", "Ana", "Luis", "Mariana", "Jorge", "Sofia", "Ricardo", "Camila",
-    "Miguel", "Valeria", "Diego", "Lucia", "Fernando", "Daniela", "Andres", "Paola",
+    "Carlos", "Ana", "Luis", "Mariana", "Jorge", "Sofia", "Ricardo", "Camila", "Martin", "Nicole",
+    "Miguel", "Valeria", "Diego", "Lucia", "Fernando", "Daniela", "Andres", "Paola", "Renato", "Victor"
 ]
 
 APELLIDOS_CLIENTE = [
-    "Garcia", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez",
-    "Diaz", "Torres", "Ramirez", "Flores", "Vargas", "Castro", "Rojas", "Mendoza",
+    "Garcia", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez", "Gonzales", "Valverde",
+    "Diaz", "Torres", "Ramirez", "Flores", "Vargas", "Castro", "Rojas", "Mendoza", "Torres", "Cruz", "Huamani", "Sanchez"
 ]
 
 

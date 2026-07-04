@@ -52,21 +52,13 @@
                     <strong style="color: #5a1829;">{{ promedio_riesgo }}/100</strong>
                 </div>
 
-                {% for item in ranking_riesgo %}
-                <div class="mb-3">
-                    <div class="d-flex justify-content-between align-items-center mb-1 gap-3">
-                        <div class="small fw-semibold text-dark">{{ item.prestamo.usuario.nombre_completo }}</div>
-                        <div class="small fw-bold" style="color: #5a1829;">{{ item.score }}</div>
-                    </div>
-                    <div class="progress" style="height: 10px; background-color: #eadfe3;">
-                        <div class="progress-bar rounded-pill" role="progressbar"
-                             style="width: {{ item.score }}%; background: linear-gradient(90deg, #a855f7 0%, #ff708f 100%);"
-                             aria-valuenow="{{ item.score }}" aria-valuemin="0" aria-valuemax="100"></div>
-                    </div>
+                {% if ranking_riesgo %}
+                <div style="position: relative; height: 280px;">
+                    <canvas id="riesgoChart"></canvas>
                 </div>
-                {% empty %}
+                {% else %}
                 <p class="text-muted mb-0">No hay clientes con préstamos para generar el ranking.</p>
-                {% endfor %}
+                {% endif %}
             </div>
         </div>
     </div>
@@ -168,5 +160,67 @@
         </table>
     </div>
 </div>
+
+{% if ranking_riesgo %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+document.addEventListener("DOMContentLoaded", function () {
+    const labels = [
+        {% for item in ranking_riesgo %}"{{ item.prestamo.usuario.nombre_completo|escapejs }}"{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+
+    const scores = [
+        {% for item in ranking_riesgo %}{{ item.score }}{% if not forloop.last %},{% endif %}{% endfor %}
+    ];
+
+    const palette = [
+        '#ff708f', '#a855f7', '#8ec5ff', '#ffb347', '#4dd4ac',
+        '#f45b69', '#6c5ce7', '#00b8d9', '#ffd166', '#2ecc71',
+        '#e84393', '#0984e3', '#fdcb6e', '#20bf6b', '#9b59b6'
+    ];
+    const colors = scores.map(function (_, i) {
+        return palette[i % palette.length];
+    });
+
+    const canvas = document.getElementById('riesgoChart');
+    if (canvas) {
+        new Chart(canvas, {
+            type: 'pie',
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: 'Score de riesgo',
+                    data: scores,
+                    backgroundColor: colors,
+                    borderColor: '#faf8f8',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            boxWidth: 12,
+                            font: { size: 11 },
+                            color: '#5a1829'
+                        }
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function (context) {
+                                return context.label + ': ' + context.raw + '/100';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+});
+</script>
+{% endif %}
 
 {% endblock %}

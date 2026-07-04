@@ -143,24 +143,24 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         <!-- Cuota Balón % -->
         <div class="col-md-3">
             <label class="fw-bold text-muted mb-1">Cuota Balón (%)</label>
-            <input type="number" step="0.01" min="0" max="40"
+            <input type="number" step="0.01" min="40" max="50"
                    id="id_cuota_balon_pct" name="cuota_balon_pct"
                    class="form-control bg-light text-center fw-bold fs-5{% if form.cuota_balon_pct.errors %} is-invalid{% endif %}"
-                   value="{{ form.cuota_balon_pct.value|default:'20' }}">
+                   value="{{ form.cuota_balon_pct.value|default:'50' }}">
             {% if form.cuota_balon_pct.errors %}
             <div class="invalid-feedback">{{ form.cuota_balon_pct.errors.0 }}</div>
             {% endif %}
             <div class="range-error" id="err-cuota-balon-pct"></div>
             <small class="hint-rango">
                 <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                Permitido: 0 % a 40 %
+                Permitido: 40 % a 50 %
             </small>
         </div>
 
         <!-- TEA -->
         <div class="col-md-3">
             <label class="fw-bold text-muted mb-1">Tasa de Interés (TEA %)</label>
-            <input type="number" step="0.01" min="8" max="25"
+            <input type="number" step="0.01" min="7.99" max="24.99"
                    id="id_valor_tasa" name="valor_tasa"
                    class="form-control bg-light text-center fw-bold fs-5{% if form.valor_tasa.errors %} is-invalid{% endif %}"
                    value="{{ form.valor_tasa.value|default:'8.80' }}">
@@ -170,14 +170,14 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             <div class="range-error" id="err-valor-tasa"></div>
             <small class="hint-rango">
                 <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                Permitido: 8 % a 25 %
+                Permitido: 7.99 % a 24.99 %
             </small>
         </div>
 
         <!-- COK -->
         <div class="col-md-3">
             <label class="fw-bold text-muted mb-1">COK (% anual)</label>
-            <input type="number" step="0.01" min="1" max="100"
+            <input type="number" step="0.01" min="8" max="25"
                    id="id_cok" name="cok"
                    class="form-control bg-light text-center fw-bold fs-5{% if form.cok.errors %} is-invalid{% endif %}"
                    value="{{ form.cok.value|default:'15.00' }}">
@@ -187,7 +187,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             <div class="range-error" id="err-cok"></div>
             <small class="hint-rango">
                 <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                Permitido: 1 % a 100 %
+                Permitido: 8 % a 25 %
             </small>
         </div>
 
@@ -201,11 +201,11 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             </label>
             <input type="hidden" name="plazo_meses" id="inp-plazo"
                    value="{{ form.plazo_meses.value|default:'18' }}">
-            <input type="range" id="slider-plazo" min="12" max="120" step="1"
+            <input type="range" id="slider-plazo" min="6" max="72" step="1"
                    value="{{ form.plazo_meses.value|default:'18' }}" class="w-100">
             <div class="d-flex justify-content-between mt-1">
-                <small class="text-muted">12 meses</small>
-                <small class="text-muted">120 meses</small>
+                <small class="text-muted">6 meses</small>
+                <small class="text-muted">72 meses</small>
             </div>
             {% if form.plazo_meses.errors %}
             <div class="text-danger small mt-1">{{ form.plazo_meses.errors.0 }}</div>
@@ -225,6 +225,12 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
      PASO 2 — Gracia · Seguros · Fecha de Inicio
 ══════════════════════════════════════════════════════════════ -->
 <div id="paso-2" class="d-none">
+
+    <button type="button" onclick="irPaso1()"
+            class="text-decoration-none fw-bold mb-3 d-inline-block border-0 bg-transparent p-0"
+            style="color: #5a1829;">
+        &larr; Volver
+    </button>
 
     <!-- ── Período de Gracia ─────────────────────────────────────── -->
     <h4 class="sec-title mt-3">
@@ -281,7 +287,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 
             <div class="col-md-7">
                 <label class="fw-bold text-muted mb-1">Número de meses de Gracia</label>
-                <input type="number" min="0" max="4"
+                <input type="number" min="0" max="6"
                        id="id_meses_gracia" name="meses_gracia"
                        class="form-control bg-light text-center fw-bold fs-5{% if form.meses_gracia.errors %} is-invalid{% endif %}"
                        value="{{ form.meses_gracia.value|default:'2' }}">
@@ -291,7 +297,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
                 <div class="range-error" id="err-meses-gracia"></div>
                 <small class="hint-rango">
                     <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                    Permitido: 0 a 4 meses
+                    Permitido: 0 a 6 meses
                 </small>
             </div>
 
@@ -321,7 +327,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             </select>
             <div id="otro-desgravamen" class="mt-2{% if form.tasa_desgravamen.value != 'OTRO' %} d-none{% endif %}">
                 <label class="fw-bold text-muted mb-1">Porcentaje mensual (%)</label>
-                <input type="number" step="0.001" min="0.04" max="0.07"
+                <input type="number" step="0.001" min="0.027" max="0.16"
                        name="tasa_desgravamen_custom" id="inp-desgravamen-custom"
                        class="form-control bg-light text-center fw-bold{% if form.tasa_desgravamen_custom.errors %} is-invalid{% endif %}"
                        placeholder="ej. 0.055"
@@ -332,7 +338,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
                 <div class="range-error" id="err-desgravamen-custom"></div>
                 <small class="hint-rango">
                     <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                    Permitido: 0.04 % a 0.07 %
+                    Permitido: 0.027 % a 0.16 %
                 </small>
             </div>
         </div>
@@ -350,7 +356,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             </select>
             <div id="otro-vehicular" class="mt-2{% if form.tasa_vehicular.value != 'OTRO' %} d-none{% endif %}">
                 <label class="fw-bold text-muted mb-1">Porcentaje mensual (%)</label>
-                <input type="number" step="0.01" min="0.35" max="8.5"
+                <input type="number" step="0.01" min="0.29" max="0.74"
                        name="tasa_vehicular_custom" id="inp-vehicular-custom"
                        class="form-control bg-light text-center fw-bold{% if form.tasa_vehicular_custom.errors %} is-invalid{% endif %}"
                        placeholder="ej. 0.40"
@@ -361,7 +367,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
                 <div class="range-error" id="err-vehicular-custom"></div>
                 <small class="hint-rango">
                     <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                    Permitido: 0.35 % a 8.5 %
+                    Permitido: 0.29 % a 0.74 %
                 </small>
             </div>
         </div>
@@ -452,24 +458,24 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         document.getElementById('id_cuota_inicial_pct'), 0, 40, '%',
         document.getElementById('err-cuota-inicial-pct'));
     setupRangeValidation(
-        document.getElementById('id_cuota_balon_pct'), 0, 40, '%',
+        document.getElementById('id_cuota_balon_pct'), 40, 50, '%',
         document.getElementById('err-cuota-balon-pct'));
     setupRangeValidation(
-        document.getElementById('id_valor_tasa'), 8, 25, '%',
+        document.getElementById('id_valor_tasa'), 7.99, 24.99, '%',
         document.getElementById('err-valor-tasa'));
     setupRangeValidation(
-        document.getElementById('id_cok'), 1, 100, '%',
+        document.getElementById('id_cok'), 8, 25, '%',
         document.getElementById('err-cok'));
 
     // Paso 2
     setupRangeValidation(
-        document.getElementById('id_meses_gracia'), 0, 4, ' meses',
+        document.getElementById('id_meses_gracia'), 0, 6, ' meses',
         document.getElementById('err-meses-gracia'));
     setupRangeValidation(
-        document.getElementById('inp-desgravamen-custom'), 0.04, 0.07, '%',
+        document.getElementById('inp-desgravamen-custom'), 0.027, 0.16, '%',
         document.getElementById('err-desgravamen-custom'));
     setupRangeValidation(
-        document.getElementById('inp-vehicular-custom'), 0.35, 8.5, '%',
+        document.getElementById('inp-vehicular-custom'), 0.29, 0.74, '%',
         document.getElementById('err-vehicular-custom'));
 
 
@@ -500,6 +506,14 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 
     window.irPaso2 = irPaso2;
 
+    function irPaso1() {
+        paso2.classList.add('d-none');
+        paso1.classList.remove('d-none');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.irPaso1 = irPaso1;
+
     {% if form.desea_gracia.errors or form.tipo_gracia.errors or form.meses_gracia.errors or form.tasa_desgravamen.errors or form.tasa_desgravamen_custom.errors or form.tasa_vehicular.errors or form.tasa_vehicular_custom.errors or form.fecha_inicio.errors %}
     paso1.classList.add('d-none');
     paso2.classList.remove('d-none');
@@ -512,7 +526,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
     const labelPlazo = document.getElementById('label-plazo');
 
     function actualizarSlider() {
-        const pct = ((parseInt(slider.value) - 12) / (120 - 12) * 100).toFixed(2) + '%';
+        const pct = ((parseInt(slider.value) - 6) / (72 - 6) * 100).toFixed(2) + '%';
         slider.style.setProperty('--pct', pct);
         labelPlazo.textContent = slider.value;
         inpPlazo.value = slider.value;
@@ -587,6 +601,14 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             }
         });
     }
+
+    /* ── Bloquear envío del formulario al presionar Enter ──────── */
+    const simuladorForm = document.getElementById('simulador-form');
+    simuladorForm.addEventListener('keydown', function (e) {
+        if (e.key === 'Enter' && e.target.tagName !== 'BUTTON') {
+            e.preventDefault();
+        }
+    });
 
 })();
 </script>

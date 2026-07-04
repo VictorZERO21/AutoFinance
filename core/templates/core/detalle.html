@@ -14,11 +14,11 @@
                 <strong class="fs-5">${{ indicadores.importe_financiado }}</strong>
             </div>
             <div class="col">
-                <small class="d-block text-white-50 fw-bold">Cuota Base</small>
-                <strong class="fs-5">${{ indicadores.cuota_base_ordinaria }}</strong>
+                <small class="d-block text-white-50 fw-bold">COK</small>
+                <strong class="fs-5">{{ prestamo.cok }}%</strong>
             </div>
             <div class="col">
-                <small class="d-block text-white-50 fw-bold">Cuota Total</small>
+                <small class="d-block text-white-50 fw-bold">Cuota</small>
                 <strong class="fs-5">${{ indicadores.cuota_ordinaria }}</strong>
             </div>
             <div class="col">
@@ -74,6 +74,10 @@
                     <span class="text-muted fw-bold">TEA</span>
                     <span class="fw-bold">{{ prestamo.valor_tasa }}%</span>
                 </div>
+                <div class="d-flex justify-content-between border-bottom pb-2">
+                    <span class="text-muted fw-bold">Cuota Balón</span>
+                    <span class="fw-bold">${{ indicadores.monto_balon }}</span>
+                </div>
             </div>
         </div>
     </div>
@@ -104,10 +108,9 @@
                         <th>Saldo Inicial</th>
                         <th>Interés</th>
                         <th>Amortización</th>
-                        <th>Cuota Base</th>
                         <th>Desgravamen</th>
                         <th>Seguro Bien</th>
-                        <th>Cuota Total</th>
+                        <th>Cuota</th>
                         <th>Saldo Final</th>
                     </tr>
                 </thead>
@@ -124,7 +127,6 @@
                         <td>${{ fila.saldo_inicial }}</td>
                         <td>${{ fila.interes }}</td>
                         <td>${{ fila.amortizacion }}</td>
-                        <td class="fw-semibold">${{ fila.cuota_base }}</td>
                         <td>${{ fila.seguro_desgravamen }}</td>
                         <td>${{ fila.seguro_vehicular }}</td>
                         <td class="fw-bold">${{ fila.cuota_total }}</td>

@@ -201,6 +201,15 @@ class SimuladorForm(forms.Form):
                     "El seguro del bien personalizado debe estar entre 0.29 % y 0.74 %.",
                 )
 
+        # COK debe ser estrictamente mayor a la TEA
+        cok = cleaned.get("cok")
+        tea = cleaned.get("valor_tasa")
+        if cok is not None and tea is not None and cok <= tea:
+            self.add_error(
+                "cok",
+                "El COK debe ser mayor a la Tasa de Interés (TEA).",
+            )
+
         # Fecha de inicio: mínimo hoy, máximo un año a partir de hoy
         fi = cleaned.get("fecha_inicio")
         if fi:

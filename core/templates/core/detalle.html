@@ -85,11 +85,17 @@
 
 <div class="card border-0 shadow-sm" style="border-radius: 12px;">
     <div class="card-body p-4">
-        <h5 class="fw-bold mb-4" style="color: #5a1829;">
-            <img src="{% static 'imagenes/calendario.png' %}" alt="Calendario"
-                 style="width:22px;height:22px;vertical-align:middle;" class="me-2">
-            Cronograma de Pagos
-        </h5>
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h5 class="fw-bold m-0" style="color: #5a1829;">
+                <img src="{% static 'imagenes/calendario.png' %}" alt="Calendario"
+                     style="width:22px;height:22px;vertical-align:middle;" class="me-2">
+                Cronograma de Pagos
+            </h5>
+            <a href="{% url 'export_pdf' prestamo.id %}" class="btn btn-sm btn-outline-danger" 
+               style="border-color: #5a1829; color: #5a1829;" title="Descargar cronograma en PDF">
+                <i class="bi bi-download me-1"></i> Descargar PDF
+            </a>
+        </div>
 
         <div class="d-flex gap-4 mb-3 text-muted small fw-bold">
             <div><span class="d-inline-block bg-warning rounded-circle me-1" style="width:10px; height:10px;"></span> Gracia Parcial</div>

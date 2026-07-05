@@ -1,11 +1,20 @@
 from datetime import date
 import random
+from io import BytesIO
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q
+from django.http import HttpResponse
+
+from reportlab.lib.pagesizes import letter, A4
+from reportlab.lib import colors
+from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+from reportlab.lib.units import inch
+from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer, PageBreak
+from reportlab.lib.enums import TA_CENTER, TA_LEFT, TA_RIGHT
 
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -385,6 +394,128 @@ def detalle_prestamo(request, prestamo_id):
         'cronograma': prestamo.cronograma.all(),
         'indicadores': indicadores,
     })
+
+
+@login_required(login_url='login')
+def exportar_cronograma_pdf(request, prestamo_id):
+    """Genera y descarga el cronograma como PDF"""
+    prestamo = get_object_or_404(Prestamo, id=prestamo_id)
+    cronograma = prestamo.cronograma.all().order_by('nro_cuota')
+    
+    # Crear el PDF en memoria
+    buffer = BytesIO()
+    doc = SimpleDocTemplate(buffer, pagesize=letter, rightMargin=0.5*inch, leftMargin=0.5*inch,
+                           topMargin=0.5*inch, bottomMargin=0.5*inch)
+    
+    # Estilos
+    styles = getSampleStyleSheet()
+    title_style = ParagraphStyle(
+        'CustomTitle',
+        parent=styles['Heading1'],
+        fontSize=16,
+        textColor=colors.HexColor('#5a1829'),
+        spaceAfter=12,
+        alignment=TA_CENTER,
+        fontName='Helvetica-Bold'
+    )
+    
+    heading_style = ParagraphStyle(
+        'CustomHeading',
+        parent=styles['Heading2'],
+        fontSize=11,
+        textColor=colors.HexColor('#5a1829'),
+        spaceAfter=8,
+        fontName='Helvetica-Bold'
+    )
+    
+    normal_style = styles['Normal']
+    normal_style.fontSize = 9
+    normal_style.alignment = TA_LEFT
+    
+    # Contenido
+    elementos = []
+    
+    # Título
+    elementos.append(Paragraph("CRONOGRAMA DE PAGOS", title_style))
+    elementos.append(Spacer(1, 0.2*inch))
+    
+    # Información del préstamo
+    info_text = f"""
+    <b>Cliente:</b> {prestamo.usuario.nombre_completo} (DNI: {prestamo.usuario.dni})<br/>
+    <b>Vehículo:</b> {prestamo.vehiculo.anio} {prestamo.vehiculo.marca} {prestamo.vehiculo.modelo}<br/>
+    <b>Precio del Bien:</b> USD {prestamo.precio_bien:,.2f}<br/>
+    <b>Cuota Inicial:</b> USD {prestamo.cuota_inicial_monto:,.2f} ({prestamo.cuota_inicial_pct}%)<br/>
+    <b>Importe Financiado:</b> USD {prestamo.importe_financiado:,.2f}<br/>
+    <b>Tasa de Interés:</b> {prestamo.valor_tasa}% ({prestamo.tipo_tasa})<br/>
+    <b>Plazo:</b> {prestamo.plazo_meses} meses<br/>
+    <b>Fecha de Inicio:</b> {prestamo.fecha_inicio.strftime('%d/%m/%Y')}<br/>
+    <b>Estado:</b> {prestamo.get_estado_display()}
+    """
+    elementos.append(Paragraph(info_text, normal_style))
+    elementos.append(Spacer(1, 0.2*inch))
+    
+    # Tabla del cronograma
+    elementos.append(Paragraph("DETALLE DEL CRONOGRAMA", heading_style))
+    
+    # Preparar datos para la tabla
+    datos_tabla = [
+        ['Cuota', 'Fecha', 'Tipo', 'Saldo Inicial', 'Interés', 'Amortización', 
+         'Desgravamen', 'Seguro', 'Cuota Total', 'Saldo Final']
+    ]
+    
+    for fila in cronograma:
+        tipo_display = dict(Prestamo.Cronograma.TipoPeriodo.choices).get(fila.tipo_periodo, fila.tipo_periodo) if hasattr(Prestamo, 'Cronograma') else fila.tipo_periodo
+        # Si el modelo está bien estructurado, usamos el nombre corto del tipo
+        tipo_corto = {
+            'GRACIA_TOTAL': 'G.Total',
+            'GRACIA_PARCIAL': 'G.Parc',
+            'ORDINARIO': 'Ord',
+            'CUOTA_BALON': 'Balón'
+        }.get(fila.tipo_periodo, fila.tipo_periodo[:3])
+        
+        datos_tabla.append([
+            str(fila.nro_cuota),
+            fila.fecha_vencimiento.strftime('%d/%m/%Y'),
+            tipo_corto,
+            f"${fila.saldo_inicial:,.2f}",
+            f"${fila.interes:,.2f}",
+            f"${fila.amortizacion:,.2f}",
+            f"${fila.seguro_desgravamen:,.2f}",
+            f"${fila.seguro_vehicular:,.2f}",
+            f"${fila.cuota_total:,.2f}",
+            f"${fila.saldo_final:,.2f}",
+        ])
+    
+    # Crear tabla con estilos
+    tabla = Table(datos_tabla, colWidths=[0.5*inch, 0.65*inch, 0.5*inch, 0.7*inch, 
+                                          0.6*inch, 0.65*inch, 0.65*inch, 0.6*inch, 
+                                          0.65*inch, 0.65*inch])
+    
+    tabla.setStyle(TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#5a1829')),
+        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+        ('FONTSIZE', (0, 0), (-1, 0), 8),
+        ('BOTTOMPADDING', (0, 0), (-1, 0), 8),
+        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+        ('GRID', (0, 0), (-1, -1), 1, colors.grey),
+        ('FONTSIZE', (0, 1), (-1, -1), 7),
+        ('ROWBACKGROUNDS', (0, 1), (-1, -1), [colors.white, colors.HexColor('#f5f5f5')]),
+    ]))
+    
+    elementos.append(tabla)
+    
+    # Construcción del PDF
+    doc.build(elementos)
+    
+    # Preparar respuesta
+    buffer.seek(0)
+    response = HttpResponse(buffer.getvalue(), content_type='application/pdf')
+    filename = f"cronograma_prestamo_{prestamo.id}_{prestamo.usuario.dni}.pdf"
+    response['Content-Disposition'] = f'attachment; filename="{filename}"'
+    
+    return response
 
 
 def _score_riesgo_cumplimiento(prestamo):

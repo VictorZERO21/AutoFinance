@@ -12,6 +12,7 @@ urlpatterns = [
     path('catalog/', views.catalogo_vehiculos, name='catalog'),
     path('simulate/<int:vehiculo_id>/', views.simular_prestamo, name='simulate'),
     path('loan/<int:prestamo_id>/', views.detalle_prestamo, name='loan'),
+    path('loan/<int:prestamo_id>/export-pdf/', views.exportar_cronograma_pdf, name='export_pdf'),
     path('clients/', views.lista_clientes, name='clients'),
     
     # API endpoints (con JWT)

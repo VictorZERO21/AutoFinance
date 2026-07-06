@@ -34,7 +34,7 @@ NOMBRES_CLIENTE = [
 ]
 
 APELLIDOS_CLIENTE = [
-    "Garcia", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez", "Gonzales", "Valverde",
+    "Garcia", "Rodriguez", "Fernandez", "Lopez", "Martinez", "Sanchez", "Perez", "Gomez", "Gonzales", "Velarde",
     "Diaz", "Torres", "Ramirez", "Flores", "Vargas", "Castro", "Rojas", "Mendoza", "Torres", "Cruz", "Huamani", "Sanchez"
 ]
 

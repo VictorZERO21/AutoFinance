@@ -88,13 +88,18 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         <div class="col-md-4">
             <div class="mb-4">
                 <label class="fw-bold text-muted mb-1">Valor del bien ($/)</label>
-                <input type="number" step="0.01" min="1"
+                <input type="number" step="0.01" min="5000" max="500000"
                        id="id_precio_bien" name="precio_bien"
                        class="form-control bg-light text-center fw-bold fs-5{% if form.precio_bien.errors %} is-invalid{% endif %}"
                        value="{{ form.precio_bien.value|default:vehiculo.precio_base }}">
                 {% if form.precio_bien.errors %}
                 <div class="invalid-feedback">{{ form.precio_bien.errors.0 }}</div>
                 {% endif %}
+                <div class="range-error" id="err-precio-bien"></div>
+                <small class="hint-rango">
+                    <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
+                    Permitido: $/ 5,000 a $/ 500,000
+                </small>
             </div>
             <div>
                 <label class="fw-bold text-muted mb-1">Modelo</label>
@@ -187,7 +192,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
             <div class="range-error" id="err-cok"></div>
             <small class="hint-rango">
                 <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                Permitido: 8 % a 25 %
+                Permitido: 8 % a 25 % — y debe ser mayor a la TEA
             </small>
         </div>
 
@@ -451,9 +456,14 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
 
         inputEl.addEventListener('input', validate);
         inputEl.addEventListener('blur',  validate);
+
+        return validate;
     }
 
     // Paso 1
+    setupRangeValidation(
+        document.getElementById('id_precio_bien'), 5000, 500000, '',
+        document.getElementById('err-precio-bien'));
     setupRangeValidation(
         document.getElementById('id_cuota_inicial_pct'), 0, 40, '%',
         document.getElementById('err-cuota-inicial-pct'));
@@ -479,6 +489,35 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         document.getElementById('err-vehicular-custom'));
 
 
+    /* ── Validación cruzada: COK debe ser mayor a la TEA ───────── */
+    const inpTasa = document.getElementById('id_valor_tasa');
+    const inpCok  = document.getElementById('id_cok');
+    const errCok  = document.getElementById('err-cok');
+
+    function validarCokVsTasa() {
+        const tasa = parseFloat(inpTasa.value);
+        const cok  = parseFloat(inpCok.value);
+        if (isNaN(tasa) || isNaN(cok)) return true;
+        if (cok <= tasa) {
+            inpCok.classList.add('is-invalid');
+            errCok.textContent = 'El COK debe ser mayor a la Tasa de Interés (TEA).';
+            errCok.style.display = 'block';
+            return false;
+        }
+        // Si ya pasó la validación de rango individual, no reintroducir error
+        if (!errCok.dataset.rangoInvalido) {
+            errCok.style.display = 'none';
+            inpCok.classList.remove('is-invalid');
+        }
+        return true;
+    }
+
+    inpTasa.addEventListener('input', validarCokVsTasa);
+    inpTasa.addEventListener('blur',  validarCokVsTasa);
+    inpCok.addEventListener('input',  validarCokVsTasa);
+    inpCok.addEventListener('blur',   validarCokVsTasa);
+
+
     /* ── Navegación entre pasos ───────────────────────────────── */
     const paso1 = document.getElementById('paso-1');
     const paso2 = document.getElementById('paso-2');
@@ -490,12 +529,17 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
         const tasa   = document.getElementById('id_valor_tasa');
         const cok    = document.getElementById('id_cok');
 
-        const vacios = [precio, ci, cb, tasa, cok].filter(el => !el.value);
+        const campos = [precio, ci, cb, tasa, cok];
+
+        const vacios = campos.filter(el => !el.value);
         if (vacios.length) { vacios[0].focus(); return; }
 
-        const fueraDeRango = [ci, cb, tasa, cok].some(el => el.classList.contains('is-invalid'));
+        // Revalidar cruce COK vs TEA antes de permitir avanzar
+        validarCokVsTasa();
+
+        const fueraDeRango = campos.some(el => el.classList.contains('is-invalid'));
         if (fueraDeRango) {
-            [ci, cb, tasa, cok].find(el => el.classList.contains('is-invalid'))?.focus();
+            campos.find(el => el.classList.contains('is-invalid'))?.focus();
             return;
         }
 

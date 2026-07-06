@@ -34,10 +34,15 @@ class SimuladorForm(forms.Form):
     # ── PASO 1: Datos del bien ────────────────────────────────────────────
     precio_bien = forms.DecimalField(
         label="Valor del bien ($/)",
-        min_value=Decimal("1"),
+        min_value=Decimal("5000"),
+        max_value=Decimal("500000"),
         decimal_places=2,
+        error_messages={
+            "min_value": "El valor del bien no puede ser menor a $/ 5,000.",
+            "max_value": "El valor del bien no puede superar $/ 500,000.",
+        },
         widget=forms.NumberInput(attrs={
-            "step": "0.01", "min": "1",
+            "step": "0.01", "min": "5000", "max": "500000",
             "class": "form-control bg-light text-center fw-bold fs-5",
         }),
     )

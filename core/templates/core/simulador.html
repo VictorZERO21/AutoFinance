@@ -87,7 +87,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
     <div class="row align-items-center mb-5 g-4">
         <div class="col-md-4">
             <div class="mb-4">
-                <label class="fw-bold text-muted mb-1">Valor del bien ($/)</label>
+                <label class="fw-bold text-muted mb-1">Valor del bien ($)</label>
                 <input type="number" step="0.01" min="5000" max="500000"
                        id="id_precio_bien" name="precio_bien"
                        class="form-control bg-light text-center fw-bold fs-5{% if form.precio_bien.errors %} is-invalid{% endif %}"
@@ -98,7 +98,7 @@ input:disabled, select:disabled { opacity: .5; cursor: not-allowed; }
                 <div class="range-error" id="err-precio-bien"></div>
                 <small class="hint-rango">
                     <img src="{% static 'imagenes/exclamacion.png' %}" alt="!" style="width:16px;height:16px;vertical-align:middle;">
-                    Permitido: $/ 5,000 a $/ 500,000
+                    Permitido: $ 5,000 a $ 500,000
                 </small>
             </div>
             <div>
